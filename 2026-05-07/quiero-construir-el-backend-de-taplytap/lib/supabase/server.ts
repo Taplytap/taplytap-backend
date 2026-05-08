@@ -4,6 +4,12 @@ import type { CookieOptions } from "@supabase/ssr";
 import type { Database } from "@/lib/types";
 import { assertServerEnv } from "@/lib/env";
 
+type CookieToSet = {
+  name: string;
+  value: string;
+  options: CookieOptions;
+};
+
 export function createSupabaseServerClient() {
   assertServerEnv();
   const cookieStore = cookies();
@@ -13,21 +19,21 @@ export function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
+        setAll(cookiesToSet: CookieToSet[]) {
           try {
-            cookieStore.set({ name, value, ...options });
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, {
+                ...options,
+                path: options.path ?? "/",
+                sameSite: options.sameSite ?? "lax",
+                secure: process.env.NODE_ENV === "production" ? true : options.secure
+              });
+            });
           } catch {
-            // Server Components cannot always write cookies. Route handlers and actions can.
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch {
-            // Server Components cannot always write cookies. Route handlers and actions can.
+            // Server Components cannot always write cookies. Middleware refreshes them.
           }
         }
       }

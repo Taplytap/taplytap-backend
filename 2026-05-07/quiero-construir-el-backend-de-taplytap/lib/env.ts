@@ -13,13 +13,27 @@ export function assertServerEnv() {
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
   }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (supabaseUrl && !isValidSupabaseProjectUrl(supabaseUrl)) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL must be the Supabase project URL without /rest/v1.");
+  }
 }
 
 export function getAdminEmails() {
-  return (process.env.ADMIN_EMAILS ?? "")
+  return [process.env.ADMIN_EMAILS, process.env.ADMIN_EMAIL]
+    .filter(Boolean)
+    .join(",")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
+}
+
+export function assertAdminEnv() {
+  if (getAdminEmails().length === 0) {
+    throw new Error("Missing ADMIN_EMAILS or ADMIN_EMAIL.");
+  }
 }
 
 export function getSupportEmail() {
@@ -34,4 +48,13 @@ export function requireServiceRoleKey() {
   }
 
   return key;
+}
+
+function isValidSupabaseProjectUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.pathname.replace(/\/$/, "") === "";
+  } catch {
+    return false;
+  }
 }

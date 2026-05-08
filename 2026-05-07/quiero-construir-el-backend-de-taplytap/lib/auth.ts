@@ -1,39 +1,53 @@
 import { redirect } from "next/navigation";
-import { getAdminEmails } from "@/lib/env";
+import { assertAdminEnv, getAdminEmails } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function getAdminUser() {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+  try {
+    assertAdminEnv();
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
 
-  if (error || !user?.email) return null;
+    if (error || !user?.email) return null;
 
-  const adminEmails = getAdminEmails();
-  const isAdmin = adminEmails.includes(user.email.toLowerCase());
+    const adminEmails = getAdminEmails();
+    const isAdmin = adminEmails.includes(user.email.toLowerCase());
 
-  return isAdmin ? user : null;
+    return isAdmin ? user : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function requireAdmin() {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+  let userEmail: string | null = null;
 
-  if (error || !user?.email) {
-    redirect("/login");
+  try {
+    assertAdminEnv();
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
+
+    userEmail = error || !user?.email ? null : user.email.toLowerCase();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Auth configuration failed.";
+    redirect(`/login?error=config&message=${encodeURIComponent(message)}`);
   }
 
-  const adminEmails = getAdminEmails();
-  const isAdmin = adminEmails.includes(user.email.toLowerCase());
+  if (!userEmail) {
+    redirect("/login?error=session&message=No%20se%20encontr%C3%B3%20una%20sesi%C3%B3n%20activa.");
+  }
+
+  const isAdmin = getAdminEmails().includes(userEmail);
 
   if (!isAdmin) {
-    redirect("/unauthorized");
+    redirect("/login?error=unauthorized&message=Este%20email%20no%20est%C3%A1%20autorizado%20para%20administrar%20TaplyTap.");
   }
 
-  return user;
+  return { email: userEmail };
 }

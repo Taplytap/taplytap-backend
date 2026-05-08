@@ -98,5 +98,21 @@ function getLoginErrorMessage(error?: string, message?: string) {
     return `Supabase no pudo enviar el magic link: ${message ?? "revisa las variables de entorno."}`;
   }
 
+  if (error === "session") {
+    return message ?? "Supabase no creó una sesión activa. Vuelve a solicitar el magic link.";
+  }
+
+  if (error === "unauthorized") {
+    return message ?? "Este email no está autorizado para entrar al panel.";
+  }
+
+  if (error === "token") {
+    return message ?? "El magic link es inválido o expiró. Solicita uno nuevo.";
+  }
+
+  if (error === "config") {
+    return message ?? "Falta una variable de entorno necesaria para auth.";
+  }
+
   return "No se pudo iniciar sesión. Intenta de nuevo.";
 }
