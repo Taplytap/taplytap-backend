@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readQrFormValues, hasQrFormErrors, validateActivation } from "@/lib/qr-form";
+import { requireAdmin } from "@/lib/auth";
+import { readQrFormValues, hasQrFormErrors, validateAdminQr } from "@/lib/qr-form";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import {
-  getRequestOrigin,
-  isValidCode,
-  normalizeCode
-} from "@/lib/security";
+import { isValidCode, normalizeCode } from "@/lib/security";
 
 type RouteContext = {
   params: {
@@ -13,12 +10,8 @@ type RouteContext = {
   };
 };
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
-  const sameOrigin = getRequestOrigin(request);
-
-  if (request.headers.get("origin") && !sameOrigin) {
-    return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
-  }
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  await requireAdmin();
 
   const code = normalizeCode(params.code);
 
@@ -28,7 +21,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   const formData = await request.formData();
   const values = readQrFormValues(formData);
-  const errors = validateActivation(values);
+  const errors = validateAdminQr(values);
 
   if (hasQrFormErrors(errors)) {
     return NextResponse.json(
@@ -41,17 +34,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const { data, error } = await supabase
     .from("qr_codes")
     .update({
-      business_name: values.business_name,
+      status: values.status,
+      business_name: values.business_name || null,
       contact_name: values.contact_name || null,
       whatsapp: values.whatsapp || null,
       owner_email: values.owner_email || null,
-      destination_url: values.destination_url,
+      destination_url: values.destination_url || null,
       shopify_order_number: values.shopify_order_number || null,
-      status: "active",
-      activated_at: new Date().toISOString()
+      activated_at: values.status === "active" ? new Date().toISOString() : null
     })
     .eq("code", code)
-    .eq("status", "inactive")
     .select("code")
     .maybeSingle();
 
@@ -60,8 +52,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Code is not available for activation." }, { status: 409 });
+    return NextResponse.json({ error: "QR not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ ok: true, code });
+  return NextResponse.json({ ok: true, message: "QR actualizado correctamente" });
 }

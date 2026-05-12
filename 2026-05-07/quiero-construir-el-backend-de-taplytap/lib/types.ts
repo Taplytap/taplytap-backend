@@ -6,7 +6,10 @@ export type QrCode = {
   status: QrStatus;
   destination_url: string | null;
   business_name: string | null;
+  contact_name: string | null;
+  whatsapp: string | null;
   owner_email: string | null;
+  shopify_order_number: string | null;
   created_at: string;
   updated_at: string;
   activated_at: string | null;

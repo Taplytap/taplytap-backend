@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Pencil, Plus } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -61,6 +62,7 @@ export default async function AdminPage() {
                   <th className="px-4 py-3">Destino</th>
                   <th className="px-4 py-3">Scans</th>
                   <th className="px-4 py-3">URL placa</th>
+                  <th className="px-4 py-3">Editar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -82,6 +84,15 @@ export default async function AdminPage() {
                       >
                         /user/{qr.code}
                       </a>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/qr-codes/${qr.code}/edit`}
+                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink"
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </Link>
                     </td>
                   </tr>
                 ))}

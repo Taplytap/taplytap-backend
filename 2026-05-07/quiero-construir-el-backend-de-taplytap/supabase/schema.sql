@@ -13,7 +13,10 @@ create table if not exists public.qr_codes (
   status public.qr_status not null default 'inactive',
   destination_url text,
   business_name text,
+  contact_name text,
+  whatsapp text,
   owner_email text,
+  shopify_order_number text,
   activated_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -28,6 +31,11 @@ create table if not exists public.qr_codes (
 
 create index if not exists qr_codes_status_idx on public.qr_codes (status);
 create index if not exists qr_codes_owner_email_idx on public.qr_codes (owner_email);
+
+alter table public.qr_codes
+  add column if not exists contact_name text,
+  add column if not exists whatsapp text,
+  add column if not exists shopify_order_number text;
 
 create table if not exists public.scan_events (
   id uuid primary key default gen_random_uuid(),

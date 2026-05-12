@@ -1,0 +1,173 @@
+"use client";
+
+import { useMemo, useState, useTransition } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import type { QrFormErrors } from "@/lib/qr-form";
+
+type ActivatePlateFormProps = {
+  code: string;
+};
+
+const emptyErrors: QrFormErrors = {};
+
+export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
+  const [errors, setErrors] = useState<QrFormErrors>(emptyErrors);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const plateUrl = useMemo(() => `/user/${code}`, [code]);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErrors(emptyErrors);
+    setSubmitError(null);
+
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const response = await fetch(`/api/activate/${code}`, {
+        method: "POST",
+        body: formData
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { ok: true }
+        | { ok?: false; error?: string; errors?: QrFormErrors }
+        | null;
+
+      if (!response.ok || result?.ok !== true) {
+        const errorResult = result as { error?: string; errors?: QrFormErrors } | null;
+        setErrors(errorResult?.errors ?? emptyErrors);
+        setSubmitError(errorResult?.error ?? "No pudimos activar tu placa. Intenta de nuevo.");
+        return;
+      }
+
+      setIsSuccess(true);
+    });
+  }
+
+  if (isSuccess) {
+    return (
+      <section className="mt-8 rounded-lg border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+          <CheckCircle2 size={28} />
+        </div>
+        <h2 className="mt-6 text-2xl font-bold text-ink">Tu placa TaplyTap está activa</h2>
+        <p className="mt-3 text-sm leading-6 text-gray-600">
+          Ya puedes probar el escaneo. Tus clientes serán enviados al link que configuraste.
+        </p>
+        <a
+          href={plateUrl}
+          className="mt-8 inline-flex w-full items-center justify-center rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white sm:w-auto"
+        >
+          Probar mi placa
+        </a>
+      </section>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="mt-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+      <div className="grid gap-5">
+        <Field
+          label="Nombre del negocio"
+          name="business_name"
+          placeholder="Café Central"
+          required
+          error={errors.business_name}
+        />
+        <Field
+          label="Nombre del responsable"
+          name="contact_name"
+          placeholder="Ana López"
+          error={errors.contact_name}
+        />
+        <Field
+          label="WhatsApp"
+          name="whatsapp"
+          inputMode="tel"
+          placeholder="5512345678"
+          error={errors.whatsapp}
+        />
+        <Field
+          label="Email"
+          name="owner_email"
+          type="email"
+          placeholder="dueno@negocio.com"
+          error={errors.owner_email}
+        />
+        <Field
+          label="Link de Google Reviews"
+          name="destination_url"
+          type="url"
+          placeholder="https://g.page/r/..."
+          required
+          error={errors.destination_url}
+        />
+        <Field
+          label="Número de pedido Shopify"
+          name="shopify_order_number"
+          placeholder="#1234"
+          error={errors.shopify_order_number}
+        />
+      </div>
+
+      <p className="mt-6 rounded-md bg-[#f7faf9] px-4 py-3 text-sm leading-6 text-gray-600">
+        Podrás solicitar cambios a soporte cuando lo necesites.
+      </p>
+
+      {submitError ? (
+        <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {submitError}
+        </p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={isPending}
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+      >
+        {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+        {isPending ? "Activando..." : "Activar placa"}
+      </button>
+    </form>
+  );
+}
+
+function Field({
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required,
+  inputMode,
+  error
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  placeholder?: string;
+  required?: boolean;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  error?: string;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-semibold text-ink">
+        {label}
+        {required ? <span className="text-coral"> *</span> : null}
+      </span>
+      <input
+        name={name}
+        type={type}
+        required={required}
+        inputMode={inputMode}
+        className={`rounded-md border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-gray-400 focus:border-mint focus:ring-2 focus:ring-mint/20 ${
+          error ? "border-red-300" : "border-gray-300"
+        }`}
+        placeholder={placeholder}
+      />
+      {error ? <span className="text-sm text-red-600">{error}</span> : null}
+    </label>
+  );
+}
