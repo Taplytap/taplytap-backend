@@ -24,10 +24,13 @@ export default function LoginPage({ searchParams }: PageProps) {
 
     try {
       const supabase = createSupabaseServerClient();
+      const callbackUrl = new URL("/auth/callback", getSiteUrl());
+      callbackUrl.searchParams.set("next", "/admin");
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${getSiteUrl()}/auth/callback`
+          emailRedirectTo: callbackUrl.toString()
         }
       });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { assertAdminEnv, assertServerEnv, getAdminEmails } from "@/lib/env";
 import type { Database } from "@/lib/types";
 
@@ -13,9 +14,12 @@ type CookieToSet = {
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const tokenHash = requestUrl.searchParams.get("token_hash");
+  const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
+  const next = getSafeNextPath(requestUrl.searchParams.get("next"));
   const providerError = requestUrl.searchParams.get("error_description") ?? requestUrl.searchParams.get("error");
 
-  let redirectUrl = new URL("/admin", request.url);
+  let redirectUrl = new URL(next, request.url);
   let response = NextResponse.redirect(redirectUrl);
 
   function setRedirect(path: string) {
@@ -24,12 +28,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (providerError) {
-    setRedirect(`/login?error=token&message=${encodeURIComponent(providerError)}`);
+    setRedirect(`/login?error=session&message=${encodeURIComponent(providerError)}`);
     return response;
   }
 
-  if (!code) {
-    setRedirect("/login?error=token&message=El%20magic%20link%20no%20incluye%20un%20c%C3%B3digo%20v%C3%A1lido.");
+  if (!code && (!tokenHash || !type)) {
+    setRedirect("/login?error=session&message=El%20magic%20link%20no%20incluye%20un%20c%C3%B3digo%20v%C3%A1lido.");
     return response;
   }
 
@@ -63,10 +67,15 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : await supabase.auth.verifyOtp({
+          token_hash: tokenHash!,
+          type: type!
+        });
 
     if (exchangeError) {
-      setRedirect(`/login?error=token&message=${encodeURIComponent(exchangeError.message)}`);
+      setRedirect(`/login?error=session&message=${encodeURIComponent(exchangeError.message)}`);
       return response;
     }
 
@@ -93,5 +102,16 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Auth configuration failed.";
     setRedirect(`/login?error=config&message=${encodeURIComponent(message)}`);
     return response;
+  }
+}
+
+function getSafeNextPath(next: string | null) {
+  if (!next) return "/admin";
+
+  try {
+    const decoded = decodeURIComponent(next);
+    return decoded.startsWith("/") && !decoded.startsWith("//") ? decoded : "/admin";
+  } catch {
+    return "/admin";
   }
 }
