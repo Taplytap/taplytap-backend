@@ -1,9 +1,13 @@
 import { headers } from "next/headers";
+import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSupportEmail } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hashIp, isSafeDestinationUrl, isValidCode, normalizeCode } from "@/lib/security";
 import type { QrStatus } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type PageProps = {
   params: {
@@ -12,6 +16,8 @@ type PageProps = {
 };
 
 export default async function UserQrPage({ params }: PageProps) {
+  noStore();
+
   const code = normalizeCode(params.code);
 
   if (!isValidCode(code)) {
