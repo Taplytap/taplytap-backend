@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
+import { BatchQrCreator } from "@/components/BatchQrCreator";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -35,20 +36,7 @@ export default async function AdminPage() {
               Mostrando hasta 250 placas recientes. Los escaneos se registran por cada visita.
             </p>
           </div>
-          <form action="/api/admin/qr-codes/batch" method="post" className="flex gap-2">
-            <input
-              name="quantity"
-              type="number"
-              min="1"
-              max="1000"
-              defaultValue="10"
-              className="w-24 rounded-md border border-gray-300 bg-white px-3 py-2"
-            />
-            <button className="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white">
-              <Plus size={16} />
-              Crear lote
-            </button>
-          </form>
+          <BatchQrCreator />
         </div>
 
         <div className="mt-8 overflow-hidden rounded-md border border-gray-200 bg-white">

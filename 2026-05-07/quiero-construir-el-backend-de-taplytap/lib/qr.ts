@@ -17,16 +17,46 @@ export async function createQrCodesBatch(quantity: number) {
   }
 
   const supabase = createSupabaseAdminClient();
-  const codes = new Set<string>();
+  const codes: string[] = [];
+  const seen = new Set<string>();
 
-  while (codes.size < quantity) {
-    codes.add(createQrCodeValue());
+  while (codes.length < quantity) {
+    const candidates = new Set<string>();
+
+    while (candidates.size < Math.max(quantity - codes.length + 25, 50)) {
+      const code = createQrCodeValue();
+
+      if (!seen.has(code)) {
+        candidates.add(code);
+        seen.add(code);
+      }
+    }
+
+    const candidateList = Array.from(candidates);
+    const { data: existing, error: lookupError } = await supabase
+      .from("qr_codes")
+      .select("code")
+      .in("code", candidateList);
+
+    if (lookupError) {
+      throw new Error(lookupError.message);
+    }
+
+    const existingCodes = new Set((existing ?? []).map((row) => row.code));
+
+    for (const code of candidateList) {
+      if (!existingCodes.has(code)) {
+        codes.push(code);
+      }
+
+      if (codes.length === quantity) break;
+    }
   }
 
   const { data, error } = await supabase
     .from("qr_codes")
     .insert(
-      Array.from(codes).map((code) => ({
+      codes.map((code) => ({
         code,
         status: "inactive" as const
       }))
