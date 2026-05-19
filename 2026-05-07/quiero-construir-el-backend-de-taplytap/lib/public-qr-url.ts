@@ -1,5 +1,5 @@
-const publicQrOrigin = "https://app.taplytap.io";
+export const PUBLIC_QR_BASE_URL = "https://app.taplytap.io";
 
 export function buildPublicQrUrl(code: string) {
-  return `${publicQrOrigin}/user/${code.trim()}`;
+  return `${PUBLIC_QR_BASE_URL}/user/${code.trim()}`;
 }

@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
 import { createQrCodesBatch } from "@/lib/qr";
-import { createBatchCsv, createQrPngZip } from "@/lib/qr-assets";
+import {
+  createBatchCsv,
+  createBatchQrRows,
+  createQrPngZip,
+  verifyQrBatchAssets
+} from "@/lib/qr-assets";
 
 export const runtime = "nodejs";
 
@@ -20,21 +25,23 @@ export async function POST(request: NextRequest) {
       : Number((await request.formData()).get("quantity"));
 
     const qrCodes = await createQrCodesBatch(quantity);
-    const rows = qrCodes.map((qrCode) => ({
+    const rows = createBatchQrRows(qrCodes.map((qrCode) => ({
       code: qrCode.code,
       url: buildPublicQrUrl(qrCode.code),
       status: qrCode.status,
       created_at: qrCode.created_at
-    }));
+    })));
     const csv = createBatchCsv(rows);
     const zip = createQrPngZip(rows);
+    const verification = verifyQrBatchAssets(rows);
 
     return NextResponse.json({
       ok: true,
       count: rows.length,
       csv,
       zipBase64: zip.toString("base64"),
-      filePrefix: `taplytap-qr-${new Date().toISOString().slice(0, 10)}`
+      filePrefix: `taplytap-qr-${new Date().toISOString().slice(0, 10)}`,
+      verification
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create QR codes.";

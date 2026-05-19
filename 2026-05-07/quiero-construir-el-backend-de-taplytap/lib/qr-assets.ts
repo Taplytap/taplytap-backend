@@ -1,4 +1,4 @@
-import { deflateSync } from "zlib";
+import { deflateSync, inflateSync } from "zlib";
 import type { QrCode } from "@/lib/types";
 
 const pngSize = 1272;
@@ -54,6 +54,13 @@ export function createBatchCsv(rows: BatchQrAsset[]) {
   return `code,url,status,created_at\n${body}\n`;
 }
 
+export function createBatchQrRows(rows: BatchQrAsset[]) {
+  return rows.map((row) => ({
+    ...row,
+    url: row.url.trim()
+  }));
+}
+
 export function createQrPngZip(rows: BatchQrAsset[]) {
   const files = rows.map((row) => ({
     name: `${row.code}.png`,
@@ -63,12 +70,55 @@ export function createQrPngZip(rows: BatchQrAsset[]) {
   return createZip(files);
 }
 
+export function verifyQrBatchAssets(rows: BatchQrAsset[]) {
+  const firstRow = rows[0];
+
+  if (!firstRow) {
+    throw new Error("Batch has no QR rows to verify.");
+  }
+
+  const payload = firstRow.url.trim();
+
+  if (payload !== firstRow.url) {
+    throw new Error("QR payload contains leading or trailing whitespace.");
+  }
+
+  if (payload !== `https://app.taplytap.io/user/${firstRow.code}`) {
+    throw new Error(`QR payload does not match CSV URL for ${firstRow.code}.`);
+  }
+
+  const png = createQrPng(payload);
+  const details = inspectPng(png);
+
+  if (details.width < 1200 || details.height < 1200) {
+    throw new Error("Generated QR PNG is smaller than 1200x1200.");
+  }
+
+  if (!details.quietZoneIsWhite) {
+    throw new Error("Generated QR PNG quiet zone is not pure white.");
+  }
+
+  return {
+    verifiedCode: firstRow.code,
+    verifiedPayload: payload,
+    width: details.width,
+    height: details.height,
+    quietZonePixels: details.quietZonePixels
+  };
+}
+
 function csvCell(value: string) {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
 function createQrPng(url: string) {
-  const matrix = createQrMatrix(url);
+  const payload = url.trim();
+
+  if (!payload.startsWith("https://app.taplytap.io/user/")) {
+    throw new Error(`Invalid QR payload: ${payload}`);
+  }
+
+  const matrix = createQrMatrix(payload);
   const pixels = Buffer.alloc(pngSize * pngSize, 255);
 
   for (let row = 0; row < qrSize; row += 1) {
@@ -288,18 +338,22 @@ function appendBits(bits: number[], value: number, length: number) {
 
 function reedSolomon(data: number[], degree: number) {
   const generator = reedSolomonGenerator(degree);
-  const result = Array.from({ length: degree }, () => 0);
+  const message = [...data, ...Array.from({ length: degree }, () => 0)];
+  let offset = 0;
 
-  for (const byte of data) {
-    const factor = byte ^ result.shift()!;
-    result.push(0);
+  while (offset < data.length) {
+    const factor = message[offset];
 
-    for (let i = 0; i < degree; i += 1) {
-      result[i] ^= gfMultiply(generator[i], factor);
+    if (factor !== 0) {
+      for (let i = 0; i < generator.length; i += 1) {
+        message[offset + i] ^= gfMultiply(generator[i], factor);
+      }
     }
+
+    offset += 1;
   }
 
-  return result;
+  return message.slice(message.length - degree);
 }
 
 function reedSolomonGenerator(degree: number) {
@@ -309,14 +363,14 @@ function reedSolomonGenerator(degree: number) {
     const next = Array.from({ length: result.length + 1 }, () => 0);
 
     for (let j = 0; j < result.length; j += 1) {
-      next[j] ^= gfMultiply(result[j], gfExp[i]);
-      next[j + 1] ^= result[j];
+      next[j] ^= result[j];
+      next[j + 1] ^= gfMultiply(result[j], gfExp[i]);
     }
 
     result = next;
   }
 
-  return result.slice(0, degree);
+  return result;
 }
 
 function gfMultiply(a: number, b: number) {
@@ -406,6 +460,49 @@ function crc32(data: Buffer) {
   }
 
   return (crc ^ 0xffffffff) >>> 0;
+}
+
+function inspectPng(png: Buffer) {
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  const idatChunks: Buffer[] = [];
+
+  while (offset < png.length) {
+    const length = png.readUInt32BE(offset);
+    offset += 4;
+    const type = png.subarray(offset, offset + 4).toString("ascii");
+    offset += 4;
+    const data = png.subarray(offset, offset + length);
+    offset += length + 4;
+
+    if (type === "IHDR") {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+    }
+
+    if (type === "IDAT") {
+      idatChunks.push(data);
+    }
+  }
+
+  const raw = inflateSync(Buffer.concat(idatChunks));
+  const quietZonePixels = quietZone * moduleSize;
+  const samplePoints = [
+    [0, 0],
+    [quietZonePixels - 1, quietZonePixels - 1],
+    [Math.floor(quietZonePixels / 2), Math.floor(quietZonePixels / 2)],
+    [width - 1, height - 1],
+    [width - quietZonePixels, height - quietZonePixels]
+  ];
+  const quietZoneIsWhite = samplePoints.every(([x, y]) => raw[y * (width + 1) + 1 + x] === 255);
+
+  return {
+    width,
+    height,
+    quietZonePixels,
+    quietZoneIsWhite
+  };
 }
 
 function uint32(value: number) {
