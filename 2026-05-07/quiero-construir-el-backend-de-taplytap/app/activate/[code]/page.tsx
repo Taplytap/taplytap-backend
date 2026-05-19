@@ -37,7 +37,7 @@ export default async function ActivatePage({ params }: PageProps) {
           Activa tu placa TaplyTap
         </h1>
         <p className="mt-4 text-base leading-7 text-gray-600">
-          Configura a dónde quieres enviar a tus clientes cuando escaneen tu placa.
+          Configura tu placa para que tus clientes lleguen directo a dejarte una reseña.
         </p>
         <p className="mt-3 font-mono text-xs font-semibold uppercase tracking-wide text-gray-400">
           Código {code}

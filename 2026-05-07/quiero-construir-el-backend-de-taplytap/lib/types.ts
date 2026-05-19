@@ -5,6 +5,7 @@ export type QrCode = {
   code: string;
   status: QrStatus;
   destination_url: string | null;
+  place_id: string | null;
   business_name: string | null;
   contact_name: string | null;
   whatsapp: string | null;

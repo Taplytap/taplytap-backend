@@ -47,6 +47,7 @@ export default async function AdminPage() {
                   <th className="px-4 py-3">Código</th>
                   <th className="px-4 py-3">Estado</th>
                   <th className="px-4 py-3">Negocio</th>
+                  <th className="px-4 py-3">Place ID</th>
                   <th className="px-4 py-3">Destino</th>
                   <th className="px-4 py-3">Scans</th>
                   <th className="px-4 py-3">URL placa</th>
@@ -61,6 +62,9 @@ export default async function AdminPage() {
                       <StatusBadge status={qr.status} />
                     </td>
                     <td className="px-4 py-3 text-gray-700">{qr.business_name ?? "Sin activar"}</td>
+                    <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs text-gray-600">
+                      {qr.place_id ?? "-"}
+                    </td>
                     <td className="max-w-xs truncate px-4 py-3 text-gray-700">
                       {qr.destination_url ?? "-"}
                     </td>

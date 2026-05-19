@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { createGoogleReviewUrl } from "@/lib/qr-form";
 import type { QrCode, QrStatus } from "@/lib/types";
 import type { QrFormErrors } from "@/lib/qr-form";
 
@@ -22,6 +23,8 @@ const emptyErrors: QrFormErrors = {};
 export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
   const router = useRouter();
   const [status, setStatus] = useState<QrStatus>(qrCode.status);
+  const [placeId, setPlaceId] = useState(qrCode.place_id ?? "");
+  const [destinationUrl, setDestinationUrl] = useState(qrCode.destination_url ?? "");
   const [errors, setErrors] = useState<QrFormErrors>(emptyErrors);
   const [message, setMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -96,33 +99,47 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
           defaultValue={qrCode.business_name}
           error={errors.business_name}
         />
-        <Field
-          label="Nombre del responsable"
-          name="contact_name"
-          defaultValue={qrCode.contact_name}
-          error={errors.contact_name}
-        />
         <Field label="WhatsApp" name="whatsapp" defaultValue={qrCode.whatsapp} error={errors.whatsapp} />
-        <Field
-          label="Email"
-          name="owner_email"
-          type="email"
-          defaultValue={qrCode.owner_email}
-          error={errors.owner_email}
-        />
-        <Field
-          label="Destination URL / Google Reviews URL"
-          name="destination_url"
-          type="url"
-          defaultValue={qrCode.destination_url}
-          error={errors.destination_url}
-        />
-        <Field
-          label="Número de pedido Shopify"
-          name="shopify_order_number"
-          defaultValue={qrCode.shopify_order_number}
-          error={errors.shopify_order_number}
-        />
+        <label className="grid gap-2">
+          <span className="text-sm font-semibold text-ink">Place ID</span>
+          <input
+            name="place_id"
+            value={placeId}
+            onChange={(event) => setPlaceId(event.target.value)}
+            className={`rounded-md border bg-white px-3 py-2 text-sm text-ink outline-none focus:border-mint focus:ring-2 focus:ring-mint/20 ${
+              errors.place_id ? "border-red-300" : "border-gray-300"
+            }`}
+            placeholder="ChIJxxxxxxxxxxxxxxxx"
+          />
+          {errors.place_id ? <span className="text-sm text-red-600">{errors.place_id}</span> : null}
+        </label>
+        <label className="grid gap-2 md:col-span-2">
+          <span className="text-sm font-semibold text-ink">Destination URL / Google Reviews URL</span>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              name="destination_url"
+              type="url"
+              value={destinationUrl}
+              onChange={(event) => setDestinationUrl(event.target.value)}
+              className={`min-w-0 flex-1 rounded-md border bg-white px-3 py-2 text-sm text-ink outline-none focus:border-mint focus:ring-2 focus:ring-mint/20 ${
+                errors.destination_url ? "border-red-300" : "border-gray-300"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const cleanPlaceId = placeId.trim().replace(/\s/g, "");
+                if (cleanPlaceId) setDestinationUrl(createGoogleReviewUrl(cleanPlaceId));
+              }}
+              className="rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-ink"
+            >
+              Reconstruir URL
+            </button>
+          </div>
+          {errors.destination_url ? (
+            <span className="text-sm text-red-600">{errors.destination_url}</span>
+          ) : null}
+        </label>
       </div>
 
       {message ? (

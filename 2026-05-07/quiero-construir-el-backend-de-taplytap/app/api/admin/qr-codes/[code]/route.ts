@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { readQrFormValues, hasQrFormErrors, validateAdminQr } from "@/lib/qr-form";
+import {
+  createGoogleReviewUrl,
+  normalizePlaceId,
+  readQrFormValues,
+  hasQrFormErrors,
+  validateAdminQr
+} from "@/lib/qr-form";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isValidCode, normalizeCode } from "@/lib/security";
 
@@ -21,6 +27,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   const formData = await request.formData();
   const values = readQrFormValues(formData);
+  const rawPlaceId = String(formData.get("place_id") ?? "");
+  const placeId = normalizePlaceId(rawPlaceId);
+
+  if (placeId && !values.destination_url) {
+    values.destination_url = createGoogleReviewUrl(placeId);
+  }
+
+  values.place_id = placeId;
   const errors = validateAdminQr(values);
 
   if (hasQrFormErrors(errors)) {
@@ -36,11 +50,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     .update({
       status: values.status,
       business_name: values.business_name || null,
-      contact_name: values.contact_name || null,
       whatsapp: values.whatsapp || null,
-      owner_email: values.owner_email || null,
+      place_id: values.place_id || null,
       destination_url: values.destination_url || null,
-      shopify_order_number: values.shopify_order_number || null,
       activated_at: values.status === "active" ? new Date().toISOString() : null
     })
     .eq("code", code)

@@ -1,14 +1,15 @@
 import { deflateSync } from "zlib";
 import type { QrCode } from "@/lib/types";
 
-const pngSize = 984;
+const pngSize = 1272;
 const moduleSize = 24;
-const quietZone = 4;
-const qrVersion = 4;
+const quietZone = 6;
+const qrVersion = 6;
 const qrSize = 17 + qrVersion * 4;
-const dataCodewords = 64;
-const eccCodewordsPerBlock = 18;
-const dataBlockCount = 2;
+const dataCodewords = 60;
+const eccCodewordsPerBlock = 28;
+const dataBlockCount = 4;
+const dataCodewordsPerBlock = 15;
 
 type BatchQrAsset = Pick<QrCode, "code" | "status"> & {
   url: string;
@@ -100,11 +101,13 @@ function createQrPng(url: string) {
 
 function createQrMatrix(url: string) {
   const data = encodeData(url);
-  const blocks = [data.slice(0, 32), data.slice(32, 64)];
+  const blocks = Array.from({ length: dataBlockCount }, (_, index) =>
+    data.slice(index * dataCodewordsPerBlock, (index + 1) * dataCodewordsPerBlock)
+  );
   const eccBlocks = blocks.map((block) => reedSolomon(block, eccCodewordsPerBlock));
   const codewords: number[] = [];
 
-  for (let i = 0; i < 32; i += 1) {
+  for (let i = 0; i < dataCodewordsPerBlock; i += 1) {
     for (const block of blocks) codewords.push(block[i]);
   }
 
@@ -161,9 +164,9 @@ function drawFunctionPatterns(modules: boolean[][], reserved: boolean[][]) {
   drawFinder(modules, reserved, 0, 0);
   drawFinder(modules, reserved, qrSize - 7, 0);
   drawFinder(modules, reserved, 0, qrSize - 7);
-  drawAlignment(modules, reserved, 26, 26);
+  drawAlignment(modules, reserved, 34, 34);
 
-  for (let i = 0; i < qrSize; i += 1) {
+  for (let i = 8; i < qrSize - 8; i += 1) {
     const bit = i % 2 === 0;
     setReserved(modules, reserved, 6, i, bit);
     setReserved(modules, reserved, i, 6, bit);
@@ -251,7 +254,7 @@ function drawFormatBits(modules: boolean[][], reserved: boolean[][]) {
 }
 
 function getFormatBits() {
-  const data = 0b00000;
+  const data = 0b10000;
   let bits = data << 10;
 
   for (let i = 14; i >= 10; i -= 1) {

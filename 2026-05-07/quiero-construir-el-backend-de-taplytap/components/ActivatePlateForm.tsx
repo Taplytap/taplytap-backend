@@ -54,7 +54,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
         </div>
         <h2 className="mt-6 text-2xl font-bold text-ink">Tu placa TaplyTap está activa</h2>
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          Ya puedes probar el escaneo. Tus clientes serán enviados al link que configuraste.
+          Ya puedes probar el escaneo. Tus clientes llegarán directo a dejarte una reseña.
         </p>
         <a
           href={plateUrl}
@@ -77,39 +77,14 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
           error={errors.business_name}
         />
         <Field
-          label="Nombre del responsable"
-          name="contact_name"
-          placeholder="Ana López"
-          error={errors.contact_name}
-        />
-        <Field
-          label="WhatsApp"
+          label="Número de teléfono / WhatsApp"
           name="whatsapp"
           inputMode="tel"
           placeholder="5512345678"
+          required
           error={errors.whatsapp}
         />
-        <Field
-          label="Email"
-          name="owner_email"
-          type="email"
-          placeholder="dueno@negocio.com"
-          error={errors.owner_email}
-        />
-        <Field
-          label="Link de Google Reviews"
-          name="destination_url"
-          type="url"
-          placeholder="https://g.page/r/..."
-          required
-          error={errors.destination_url}
-        />
-        <Field
-          label="Número de pedido Shopify"
-          name="shopify_order_number"
-          placeholder="#1234"
-          error={errors.shopify_order_number}
-        />
+        <PlaceIdField error={errors.place_id} />
       </div>
 
       <p className="mt-6 rounded-md bg-[#f7faf9] px-4 py-3 text-sm leading-6 text-gray-600">
@@ -128,9 +103,46 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
       >
         {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-        {isPending ? "Activando..." : "Activar placa"}
+        {isPending ? "Activando..." : "Activar mi placa"}
       </button>
     </form>
+  );
+}
+
+function PlaceIdField({ error }: { error?: string }) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-semibold text-ink">
+        Place ID de Google Maps <span className="text-coral">*</span>
+      </span>
+      <div
+        className={`flex overflow-hidden rounded-md border bg-white text-base text-ink transition focus-within:border-mint focus-within:ring-2 focus-within:ring-mint/20 ${
+          error ? "border-red-300" : "border-gray-300"
+        }`}
+      >
+        <span className="hidden min-w-0 items-center border-r border-gray-200 bg-gray-50 px-3 text-sm text-gray-500 sm:flex">
+          https://search.google.com/local/writereview?placeid=
+        </span>
+        <input
+          name="place_id"
+          required
+          className="min-w-0 flex-1 px-3 py-3 outline-none placeholder:text-gray-400"
+          placeholder="Ej. ChIJxxxxxxxxxxxxxxxx"
+        />
+      </div>
+      {error ? <span className="text-sm text-red-600">{error}</span> : null}
+      <span className="text-sm leading-6 text-gray-500">
+        Busca tu negocio, copia el Place ID y pégalo aquí.{" "}
+        <a
+          href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold text-mint"
+        >
+          Buscar mi Place ID
+        </a>
+      </span>
+    </label>
   );
 }
 

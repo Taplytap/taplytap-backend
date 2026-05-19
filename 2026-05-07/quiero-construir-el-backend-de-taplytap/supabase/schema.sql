@@ -12,6 +12,7 @@ create table if not exists public.qr_codes (
   code text not null unique,
   status public.qr_status not null default 'inactive',
   destination_url text,
+  place_id text,
   business_name text,
   contact_name text,
   whatsapp text,
@@ -33,6 +34,7 @@ create index if not exists qr_codes_status_idx on public.qr_codes (status);
 create index if not exists qr_codes_owner_email_idx on public.qr_codes (owner_email);
 
 alter table public.qr_codes
+  add column if not exists place_id text,
   add column if not exists contact_name text,
   add column if not exists whatsapp text,
   add column if not exists shopify_order_number text;

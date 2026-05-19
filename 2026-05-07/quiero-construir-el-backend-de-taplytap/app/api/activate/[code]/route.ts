@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readQrFormValues, hasQrFormErrors, validateActivation } from "@/lib/qr-form";
+import {
+  createGoogleReviewUrl,
+  readQrFormValues,
+  hasQrFormErrors,
+  validateActivation
+} from "@/lib/qr-form";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   getRequestOrigin,
@@ -38,15 +43,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const destinationUrl = createGoogleReviewUrl(values.place_id);
   const { data, error } = await supabase
     .from("qr_codes")
     .update({
       business_name: values.business_name,
-      contact_name: values.contact_name || null,
       whatsapp: values.whatsapp || null,
-      owner_email: values.owner_email || null,
-      destination_url: values.destination_url,
-      shopify_order_number: values.shopify_order_number || null,
+      place_id: values.place_id,
+      destination_url: destinationUrl,
       status: "active",
       activated_at: new Date().toISOString()
     })

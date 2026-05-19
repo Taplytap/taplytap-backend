@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
       : Number((await request.formData()).get("quantity"));
 
     const qrCodes = await createQrCodesBatch(quantity);
-    const siteUrl = getSiteUrl();
+    const configuredSiteUrl = getSiteUrl();
+    const siteUrl = configuredSiteUrl.includes("localhost")
+      ? "https://app.taplytap.io"
+      : configuredSiteUrl;
     const rows = qrCodes.map((qrCode) => ({
       code: qrCode.code,
       url: `${siteUrl}/user/${qrCode.code}`,
