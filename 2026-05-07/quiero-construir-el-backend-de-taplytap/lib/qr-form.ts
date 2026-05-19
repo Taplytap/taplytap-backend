@@ -42,6 +42,12 @@ export function validateActivation(values: QrFormValues) {
     errors.whatsapp = "Ingresa un WhatsApp con al menos 10 dígitos.";
   }
 
+  if (!values.owner_email) {
+    errors.owner_email = "Ingresa tu correo electrónico.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.owner_email) || values.owner_email.length > 160) {
+    errors.owner_email = "Ingresa un email válido.";
+  }
+
   if (!values.place_id) {
     errors.place_id = "Ingresa el Place ID de Google Maps.";
   }

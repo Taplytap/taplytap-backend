@@ -49,6 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     .update({
       business_name: values.business_name,
       whatsapp: values.whatsapp || null,
+      owner_email: values.owner_email,
       place_id: values.place_id,
       destination_url: destinationUrl,
       status: "active",

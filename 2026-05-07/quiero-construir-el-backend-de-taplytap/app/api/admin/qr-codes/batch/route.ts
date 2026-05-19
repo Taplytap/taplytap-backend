@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/auth";
-import { getSiteUrl } from "@/lib/env";
+import { buildPublicQrUrl } from "@/lib/public-qr-url";
 import { createQrCodesBatch } from "@/lib/qr";
 import { createBatchCsv, createQrPngZip } from "@/lib/qr-assets";
 
@@ -20,14 +20,11 @@ export async function POST(request: NextRequest) {
       : Number((await request.formData()).get("quantity"));
 
     const qrCodes = await createQrCodesBatch(quantity);
-    const configuredSiteUrl = getSiteUrl();
-    const siteUrl = configuredSiteUrl.includes("localhost")
-      ? "https://app.taplytap.io"
-      : configuredSiteUrl;
     const rows = qrCodes.map((qrCode) => ({
       code: qrCode.code,
-      url: `${siteUrl}/user/${qrCode.code}`,
-      status: qrCode.status
+      url: buildPublicQrUrl(qrCode.code),
+      status: qrCode.status,
+      created_at: qrCode.created_at
     }));
     const csv = createBatchCsv(rows);
     const zip = createQrPngZip(rows);

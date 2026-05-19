@@ -51,6 +51,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       status: values.status,
       business_name: values.business_name || null,
       whatsapp: values.whatsapp || null,
+      owner_email: values.owner_email || null,
       place_id: values.place_id || null,
       destination_url: values.destination_url || null,
       activated_at: values.status === "active" ? new Date().toISOString() : null

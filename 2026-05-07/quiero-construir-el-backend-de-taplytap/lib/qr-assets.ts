@@ -13,6 +13,7 @@ const dataCodewordsPerBlock = 15;
 
 type BatchQrAsset = Pick<QrCode, "code" | "status"> & {
   url: string;
+  created_at: string;
 };
 
 const gfExp = new Array<number>(512);
@@ -47,10 +48,10 @@ for (let i = 0; i < 256; i += 1) {
 
 export function createBatchCsv(rows: BatchQrAsset[]) {
   const body = rows
-    .map((row) => [row.code, row.url, row.status].map(csvCell).join(","))
+    .map((row) => [row.code, row.url, row.status, row.created_at].map(csvCell).join(","))
     .join("\n");
 
-  return `codigo,url,estado\n${body}\n`;
+  return `code,url,status,created_at\n${body}\n`;
 }
 
 export function createQrPngZip(rows: BatchQrAsset[]) {

@@ -100,6 +100,13 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
           error={errors.business_name}
         />
         <Field label="WhatsApp" name="whatsapp" defaultValue={qrCode.whatsapp} error={errors.whatsapp} />
+        <Field
+          label="Email"
+          name="owner_email"
+          type="email"
+          defaultValue={qrCode.owner_email}
+          error={errors.owner_email}
+        />
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-ink">Place ID</span>
           <input

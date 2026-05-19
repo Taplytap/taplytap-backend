@@ -1,29 +1,53 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { BatchQrCreator } from "@/components/BatchQrCreator";
+import { DangerZone } from "@/components/DangerZone";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
+import { buildPublicQrUrl } from "@/lib/public-qr-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getSiteUrl } from "@/lib/env";
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams?: {
+    page?: string;
+    perPage?: string;
+  };
+};
+
+const perPageOptions = [50, 100, 250];
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   await requireAdmin();
 
+  const requestedPerPage = Number(searchParams?.perPage ?? 50);
+  const perPage = perPageOptions.includes(requestedPerPage) ? requestedPerPage : 50;
+  const page = Math.max(Number(searchParams?.page ?? 1), 1);
+  const from = (page - 1) * perPage;
+  const to = from + perPage - 1;
   const supabase = createSupabaseAdminClient();
-  const [{ data: qrCodes, error: qrError }, { data: scans }] = await Promise.all([
-    supabase.from("qr_codes").select("*").order("created_at", { ascending: false }).limit(250),
-    supabase.from("scan_events").select("qr_code_id,code").limit(10000)
-  ]);
+  const { data: qrCodes, error: qrError, count } = await supabase
+    .from("qr_codes")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: true })
+    .range(from, to);
 
   if (qrError) {
     throw new Error(qrError.message);
   }
 
+  const qrIds = (qrCodes ?? []).map((qr) => qr.id);
+  const { data: scans } = qrIds.length > 0
+    ? await supabase.from("scan_events").select("qr_code_id,code").in("qr_code_id", qrIds)
+    : { data: [] };
   const scanCounts = new Map<string, number>();
   for (const scan of scans ?? []) {
     const key = scan.qr_code_id ?? scan.code;
     scanCounts.set(key, (scanCounts.get(key) ?? 0) + 1);
   }
+  const total = count ?? 0;
+  const totalPages = Math.max(Math.ceil(total / perPage), 1);
+  const visibleFrom = total === 0 ? 0 : from + 1;
+  const visibleTo = Math.min(to + 1, total);
 
   return (
     <main className="min-h-screen bg-[#f7faf9] px-4 py-8 sm:px-6 lg:px-8">
@@ -33,7 +57,7 @@ export default async function AdminPage() {
             <p className="text-sm font-semibold uppercase tracking-wide text-mint">TaplyTap Admin</p>
             <h1 className="mt-2 text-3xl font-bold text-ink">Códigos QR</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Mostrando hasta 250 placas recientes. Los escaneos se registran por cada visita.
+              Mostrando {visibleFrom}-{visibleTo} de {total}. Ordenados por fecha de creación ascendente.
             </p>
           </div>
           <BatchQrCreator />
@@ -71,7 +95,7 @@ export default async function AdminPage() {
                     <td className="px-4 py-3 text-gray-700">{scanCounts.get(qr.id) ?? 0}</td>
                     <td className="px-4 py-3">
                       <a
-                        href={`${getSiteUrl()}/user/${qr.code}`}
+                        href={buildPublicQrUrl(qr.code)}
                         className="font-mono text-xs font-semibold text-mint"
                       >
                         /user/{qr.code}
@@ -92,7 +116,73 @@ export default async function AdminPage() {
             </table>
           </div>
         </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          perPage={perPage}
+          total={total}
+          visibleFrom={visibleFrom}
+          visibleTo={visibleTo}
+        />
+        <DangerZone />
       </div>
     </main>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  perPage,
+  total,
+  visibleFrom,
+  visibleTo
+}: {
+  page: number;
+  totalPages: number;
+  perPage: number;
+  total: number;
+  visibleFrom: number;
+  visibleTo: number;
+}) {
+  const previousPage = Math.max(page - 1, 1);
+  const nextPage = Math.min(page + 1, totalPages);
+
+  return (
+    <div className="mt-4 flex flex-col gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        Página {page} de {totalPages}. Mostrando {visibleFrom}-{visibleTo} de {total}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Por página</span>
+        {perPageOptions.map((option) => (
+          <Link
+            key={option}
+            href={`/admin?page=1&perPage=${option}`}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${
+              option === perPage ? "border-ink bg-ink text-white" : "border-gray-300 text-ink"
+            }`}
+          >
+            {option}
+          </Link>
+        ))}
+        <Link
+          href={`/admin?page=${previousPage}&perPage=${perPage}`}
+          className={`rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink ${
+            page <= 1 ? "pointer-events-none opacity-50" : ""
+          }`}
+        >
+          Anterior
+        </Link>
+        <Link
+          href={`/admin?page=${nextPage}&perPage=${perPage}`}
+          className={`rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink ${
+            page >= totalPages ? "pointer-events-none opacity-50" : ""
+          }`}
+        >
+          Siguiente
+        </Link>
+      </div>
+    </div>
   );
 }

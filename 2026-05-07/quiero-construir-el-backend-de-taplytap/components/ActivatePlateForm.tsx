@@ -84,6 +84,14 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
           required
           error={errors.whatsapp}
         />
+        <Field
+          label="Correo electrónico"
+          name="owner_email"
+          type="email"
+          placeholder="dueno@negocio.com"
+          required
+          error={errors.owner_email}
+        />
         <PlaceIdField error={errors.place_id} />
       </div>
 
