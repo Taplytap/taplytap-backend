@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import { buildPublicQrUrl } from "@/lib/public-qr-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
@@ -58,7 +59,8 @@ export async function createQrCodesBatch(quantity: number) {
     .insert(
       codes.map((code) => ({
         code,
-        status: "inactive" as const
+        status: "inactive" as const,
+        public_url: buildPublicQrUrl(code)
       }))
     )
     .select("*");

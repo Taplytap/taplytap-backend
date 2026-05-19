@@ -13,12 +13,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const contentType = request.headers.get("content-type") ?? "";
-    const quantity = contentType.includes("application/json")
-      ? Number((await request.json()).quantity)
-      : Number((await request.formData()).get("quantity"));
-
-    const qrCodes = await createQrCodesBatch(quantity);
+    const { quantity } = (await request.json().catch(() => ({}))) as { quantity?: number };
+    const qrCodes = await createQrCodesBatch(Number(quantity));
     const rows = createBatchQrRows(
       qrCodes.map((qrCode) => ({
         code: qrCode.code,
@@ -27,6 +23,7 @@ export async function POST(request: NextRequest) {
         created_at: qrCode.created_at
       }))
     );
+
     const csv = createBatchCsv(rows);
 
     return NextResponse.json({
@@ -36,7 +33,7 @@ export async function POST(request: NextRequest) {
       filePrefix: `taplytap-links-${new Date().toISOString().slice(0, 10)}`
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not create QR codes.";
+    const message = error instanceof Error ? error.message : "Could not generate links.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

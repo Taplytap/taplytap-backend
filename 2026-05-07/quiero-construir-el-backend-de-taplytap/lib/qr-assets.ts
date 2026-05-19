@@ -12,7 +12,7 @@ const dataBlockCount = 4;
 const dataCodewordsPerBlock = 15;
 
 type BatchQrAsset = Pick<QrCode, "code" | "status"> & {
-  url: string;
+  public_url: string;
   created_at: string;
 };
 
@@ -48,23 +48,23 @@ for (let i = 0; i < 256; i += 1) {
 
 export function createBatchCsv(rows: BatchQrAsset[]) {
   const body = rows
-    .map((row) => [row.code, row.url, row.status, row.created_at].map(csvCell).join(","))
+    .map((row) => [row.code, row.public_url, row.status, row.created_at].map(csvCell).join(","))
     .join("\n");
 
-  return `code,url,status,created_at\n${body}\n`;
+  return `code,public_url,status,created_at\n${body}\n`;
 }
 
 export function createBatchQrRows(rows: BatchQrAsset[]) {
   return rows.map((row) => ({
     ...row,
-    url: row.url.trim()
+    public_url: row.public_url.trim()
   }));
 }
 
 export function createQrPngZip(rows: BatchQrAsset[]) {
   const files = rows.map((row) => ({
     name: `${row.code}.png`,
-    data: createQrPng(row.url)
+    data: createQrPng(row.public_url)
   }));
 
   return createZip(files);
@@ -77,14 +77,14 @@ export function verifyQrBatchAssets(rows: BatchQrAsset[]) {
     throw new Error("Batch has no QR rows to verify.");
   }
 
-  const payload = firstRow.url.trim();
+  const payload = firstRow.public_url.trim();
 
-  if (payload !== firstRow.url) {
+  if (payload !== firstRow.public_url) {
     throw new Error("QR payload contains leading or trailing whitespace.");
   }
 
   if (payload !== `https://app.taplytap.io/user/${firstRow.code}`) {
-    throw new Error(`QR payload does not match CSV URL for ${firstRow.code}.`);
+    throw new Error(`QR payload does not match CSV public_url for ${firstRow.code}.`);
   }
 
   const png = createQrPng(payload);

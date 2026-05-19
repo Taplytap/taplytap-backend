@@ -11,6 +11,7 @@ create table if not exists public.qr_codes (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
   status public.qr_status not null default 'inactive',
+  public_url text,
   destination_url text,
   place_id text,
   business_name text,
@@ -34,6 +35,7 @@ create index if not exists qr_codes_status_idx on public.qr_codes (status);
 create index if not exists qr_codes_owner_email_idx on public.qr_codes (owner_email);
 
 alter table public.qr_codes
+  add column if not exists public_url text,
   add column if not exists place_id text,
   add column if not exists contact_name text,
   add column if not exists whatsapp text,
