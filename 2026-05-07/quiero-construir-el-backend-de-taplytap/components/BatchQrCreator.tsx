@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Download, FileText, Loader2, QrCode } from "lucide-react";
+import { Download, FileText, Loader2 } from "lucide-react";
 
 type LinksResponse = {
   ok: true;
@@ -10,20 +10,8 @@ type LinksResponse = {
   filePrefix: string;
 };
 
-type AssetsResponse = LinksResponse & {
-  zipBase64: string;
-  verification?: {
-    verifiedCode: string;
-    verifiedPayload: string;
-    width: number;
-    height: number;
-    quietZonePixels: number;
-  };
-};
-
 type LastDownload = {
   csv?: string;
-  zipBase64?: string;
   filePrefix: string;
 };
 
@@ -88,35 +76,31 @@ export function BatchQrCreator() {
     });
   }
 
-  async function generateQrAssets() {
+  async function exportLinksCsv() {
     beginProgress();
 
     startTransition(async () => {
       try {
-        const response = await fetch("/api/admin/qr-codes/assets", {
+        const response = await fetch("/api/admin/qr-codes/links/export", {
           method: "POST"
         });
-        const result = (await response.json().catch(() => null)) as AssetsResponse | { error?: string } | null;
+        const result = (await response.json().catch(() => null)) as LinksResponse | { error?: string } | null;
 
         if (!response.ok || !result || !("ok" in result)) {
           const errorResult = result as { error?: string } | null;
-          setError(errorResult?.error ?? "No pudimos generar los QR.");
+          setError(errorResult?.error ?? "No pudimos exportar los links.");
           return;
         }
 
         endProgress();
         setLastDownload({
           csv: result.csv,
-          zipBase64: result.zipBase64,
           filePrefix: result.filePrefix
         });
-        setMessage(
-          `${result.count} QR generados desde public_url. Verificado: ${result.verification?.verifiedPayload ?? "OK"}`
-        );
+        setMessage(`${result.count} links exportados correctamente`);
         downloadCsv(result.csv, result.filePrefix);
-        downloadZip(result.zipBase64, result.filePrefix);
       } catch {
-        setError("No pudimos generar los QR. Intenta de nuevo.");
+        setError("No pudimos exportar los links. Intenta de nuevo.");
       } finally {
         if (progressTimer.current) clearInterval(progressTimer.current);
       }
@@ -149,11 +133,11 @@ export function BatchQrCreator() {
         <button
           type="button"
           disabled={isPending}
-          onClick={generateQrAssets}
+          onClick={exportLinksCsv}
           className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? <Loader2 size={16} className="animate-spin" /> : <QrCode size={16} />}
-          Generar QR desde links
+          {isPending ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          Exportar CSV de links
         </button>
       </div>
 
@@ -180,16 +164,6 @@ export function BatchQrCreator() {
 
       {lastDownload ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          {lastDownload.zipBase64 ? (
-            <button
-              type="button"
-              onClick={() => downloadZip(lastDownload.zipBase64!, lastDownload.filePrefix)}
-              className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-ink"
-            >
-              <Download size={14} />
-              Descargar ZIP
-            </button>
-          ) : null}
           {lastDownload.csv ? (
             <button
               type="button"
@@ -209,12 +183,6 @@ export function BatchQrCreator() {
 function downloadCsv(csv: string, filePrefix: string) {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   downloadBlob(blob, `${filePrefix}.csv`);
-}
-
-function downloadZip(zipBase64: string, filePrefix: string) {
-  const bytes = Uint8Array.from(atob(zipBase64), (char) => char.charCodeAt(0));
-  const blob = new Blob([bytes], { type: "application/zip" });
-  downloadBlob(blob, `${filePrefix}.zip`);
 }
 
 function downloadBlob(blob: Blob, filename: string) {
