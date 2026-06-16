@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
   const next = getSafeNextPath(requestUrl.searchParams.get("next"));
-  const loginPath = next.startsWith("/admin") ? "/login?next=/admin&" : "/login?";
+  const loginPath = next.startsWith("/admin") ? "/admin/login?" : "/login?";
   const providerError = requestUrl.searchParams.get("error_description") ?? requestUrl.searchParams.get("error");
 
   let redirectUrl = new URL(next, request.url);
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       const isAdmin = getAdminEmails().includes(user.email.toLowerCase());
 
       if (!isAdmin) {
-        setRedirect("/login?next=/admin&error=unauthorized&message=Este%20email%20no%20est%C3%A1%20autorizado%20para%20administrar%20TaplyTap.");
+        setRedirect("/admin/login?error=unauthorized");
         await supabase.auth.signOut();
         return response;
       }

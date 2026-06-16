@@ -1,0 +1,10 @@
+{
+  "name": "Trok",
+  "short_name": "Trok",
+  "description": "Intercambia objetos con personas de tu ciudad.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f4ef",
+  "theme_color": "#ff5a5f",
+  "icons": []
+}
