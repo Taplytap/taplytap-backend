@@ -50,9 +50,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   return (
     <main className="min-h-screen bg-[#f7faf9] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-4 inline-flex rounded-md border border-mint/30 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-mint">
-          Admin limpio v2
-        </div>
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-mint">TaplyTap Admin</p>
@@ -90,6 +87,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <th className="px-4 py-3">Public URL</th>
                   <th className="px-4 py-3">Place ID</th>
                   <th className="px-4 py-3">Destino</th>
+                  <th className="px-4 py-3">Owner email</th>
                   <th className="px-4 py-3">Owner user</th>
                   <th className="px-4 py-3">Reclamada</th>
                   <th className="px-4 py-3">Scans</th>
@@ -113,6 +111,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </td>
                     <td className="max-w-xs truncate px-4 py-3 text-gray-700">
                       {qr.destination_url ?? "-"}
+                    </td>
+                    <td className="max-w-[12rem] truncate px-4 py-3 text-gray-700">
+                      {qr.owner_email ?? "-"}
                     </td>
                     <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs text-gray-600">
                       {qr.owner_user_id ?? "-"}

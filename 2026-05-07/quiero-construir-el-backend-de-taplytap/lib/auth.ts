@@ -36,17 +36,17 @@ export async function requireAdmin() {
     userEmail = error || !user?.email ? null : user.email.toLowerCase();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Auth configuration failed.";
-    redirect(`/login?error=config&message=${encodeURIComponent(message)}`);
+    redirect(`/login?next=/admin&error=config&message=${encodeURIComponent(message)}`);
   }
 
   if (!userEmail) {
-    redirect("/login?error=session&message=No%20se%20encontr%C3%B3%20una%20sesi%C3%B3n%20activa.");
+    redirect("/login?next=/admin&error=session&message=No%20se%20encontr%C3%B3%20una%20sesi%C3%B3n%20activa.");
   }
 
   const isAdmin = getAdminEmails().includes(userEmail);
 
   if (!isAdmin) {
-    redirect("/login?error=unauthorized&message=Este%20email%20no%20est%C3%A1%20autorizado%20para%20administrar%20TaplyTap.");
+    redirect("/login?next=/admin&error=unauthorized&message=Este%20email%20no%20est%C3%A1%20autorizado%20para%20administrar%20TaplyTap.");
   }
 
   return { email: userEmail };

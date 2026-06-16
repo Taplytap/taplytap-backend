@@ -31,7 +31,7 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
   const [isPending, startTransition] = useTransition();
   const platePath = useMemo(() => `/user/${qrCode.code}`, [qrCode.code]);
 
-  async function submit(form: HTMLFormElement, nextStatus?: QrStatus) {
+  async function submit(form: HTMLFormElement, nextStatus?: QrStatus, resetOwnerClaim = false) {
     setErrors(emptyErrors);
     setMessage(null);
     setSubmitError(null);
@@ -41,6 +41,10 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
     if (nextStatus) {
       formData.set("status", nextStatus);
       setStatus(nextStatus);
+    }
+
+    if (resetOwnerClaim) {
+      formData.set("reset_owner_claim", "1");
     }
 
     startTransition(async () => {
@@ -101,12 +105,21 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
         />
         <Field label="WhatsApp" name="whatsapp" defaultValue={qrCode.whatsapp} error={errors.whatsapp} />
         <Field
-          label="Email"
+          label="Correo del owner"
           name="owner_email"
           type="email"
           defaultValue={qrCode.owner_email}
           error={errors.owner_email}
         />
+        <div className="grid gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+          <span className="text-sm font-semibold text-ink">Owner asignado</span>
+          <span className="break-all font-mono text-xs text-gray-600">{qrCode.owner_user_id ?? "Sin reclamar"}</span>
+          <span className="text-xs text-gray-500">
+            {qrCode.claimed_at
+              ? `Reclamada: ${new Date(qrCode.claimed_at).toLocaleString("es-MX")}`
+              : "Cuando el owner inicie sesión, se asignará automáticamente."}
+          </span>
+        </div>
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-ink">Place ID</span>
           <input
@@ -169,6 +182,14 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
         >
           {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
           {isPending ? "Guardando..." : "Guardar cambios"}
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={(event) => submit(event.currentTarget.form!, undefined, true)}
+          className="rounded-md border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Asignar owner por email
         </button>
         <button
           type="button"

@@ -27,6 +27,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   const formData = await request.formData();
   const values = readQrFormValues(formData);
+  const resetOwnerClaim = String(formData.get("reset_owner_claim") ?? "") === "1";
   const rawPlaceId = String(formData.get("place_id") ?? "");
   const placeId = normalizePlaceId(rawPlaceId);
 
@@ -45,17 +46,37 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const { data: currentQr, error: currentError } = await supabase
+    .from("qr_codes")
+    .select("owner_email")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (currentError) {
+    return NextResponse.json({ error: currentError.message }, { status: 500 });
+  }
+
+  if (!currentQr) {
+    return NextResponse.json({ error: "QR not found." }, { status: 404 });
+  }
+
+  const nextOwnerEmail = values.owner_email || null;
+  const currentOwnerEmail = currentQr.owner_email ?? null;
+  const shouldResetOwnerClaim = resetOwnerClaim || nextOwnerEmail !== currentOwnerEmail;
+  const updatePayload = {
+    status: values.status,
+    business_name: values.business_name || null,
+    whatsapp: values.whatsapp || null,
+    owner_email: nextOwnerEmail,
+    place_id: values.place_id || null,
+    destination_url: values.destination_url || null,
+    activated_at: values.status === "active" ? new Date().toISOString() : null,
+    ...(shouldResetOwnerClaim ? { owner_user_id: null, claimed_at: null } : {})
+  };
+
   const { data, error } = await supabase
     .from("qr_codes")
-    .update({
-      status: values.status,
-      business_name: values.business_name || null,
-      whatsapp: values.whatsapp || null,
-      owner_email: values.owner_email || null,
-      place_id: values.place_id || null,
-      destination_url: values.destination_url || null,
-      activated_at: values.status === "active" ? new Date().toISOString() : null
-    })
+    .update(updatePayload)
     .eq("code", code)
     .select("code")
     .maybeSingle();

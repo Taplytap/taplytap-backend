@@ -7,6 +7,7 @@ type PageProps = {
     sent?: string;
     error?: string;
     message?: string;
+    next?: string;
   };
 };
 
@@ -15,9 +16,10 @@ export default function LoginPage({ searchParams }: PageProps) {
     "use server";
 
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const next = getSafeLoginNext(String(formData.get("next") ?? ""));
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      redirect("/login?error=invalid-email");
+      redirect(buildLoginUrl(next, { error: "invalid-email" }));
     }
 
     let authErrorMessage: string | null = null;
@@ -25,7 +27,7 @@ export default function LoginPage({ searchParams }: PageProps) {
     try {
       const supabase = createSupabaseServerClient();
       const callbackUrl = new URL("/auth/callback", getSiteUrl());
-      callbackUrl.searchParams.set("next", "/admin");
+      callbackUrl.searchParams.set("next", next);
 
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -47,19 +49,27 @@ export default function LoginPage({ searchParams }: PageProps) {
         message: authErrorMessage
       });
 
-      redirect(`/login?${params.toString()}`);
+      redirect(buildLoginUrl(next, Object.fromEntries(params)));
     }
 
-    redirect("/login?sent=1");
+    redirect(buildLoginUrl(next, { sent: "1" }));
   }
 
+  const next = getSafeLoginNext(searchParams?.next);
+  const isAdminLogin = next === "/admin";
   const errorMessage = getLoginErrorMessage(searchParams?.error, searchParams?.message);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
       <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-mint">TaplyTap</p>
-      <h1 className="text-3xl font-bold text-ink">Entrar al panel</h1>
-      <p className="mt-3 text-gray-600">Recibe un enlace seguro en tu correo de administrador.</p>
+      <h1 className="text-3xl font-bold text-ink">
+        {isAdminLogin ? "Entrar al admin" : "Entrar a mi cuenta"}
+      </h1>
+      <p className="mt-3 text-gray-600">
+        {isAdminLogin
+          ? "Recibe un enlace seguro en tu correo de administrador."
+          : "Recibe un enlace seguro para ver tus placas TaplyTap."}
+      </p>
 
       {errorMessage ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -73,6 +83,7 @@ export default function LoginPage({ searchParams }: PageProps) {
         </div>
       ) : (
         <form action={signIn} className="mt-8 grid gap-4">
+          <input type="hidden" name="next" value={next} />
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-ink">Email</span>
             <input
@@ -80,7 +91,7 @@ export default function LoginPage({ searchParams }: PageProps) {
               type="email"
               required
               className="rounded-md border border-gray-300 bg-white px-3 py-2"
-              placeholder="admin@taplytap.io"
+              placeholder={isAdminLogin ? "admin@taplytap.io" : "tu@email.com"}
             />
           </label>
           <button className="rounded-md bg-ink px-4 py-2 font-semibold text-white">Enviar enlace</button>
@@ -88,6 +99,21 @@ export default function LoginPage({ searchParams }: PageProps) {
       )}
     </main>
   );
+}
+
+function getSafeLoginNext(next?: string | null) {
+  if (next === "/admin") return "/admin";
+  return "/dashboard";
+}
+
+function buildLoginUrl(next: string, params: Record<string, string>) {
+  const searchParams = new URLSearchParams(params);
+
+  if (next === "/admin") {
+    searchParams.set("next", "/admin");
+  }
+
+  return `/login?${searchParams.toString()}`;
 }
 
 function getLoginErrorMessage(error?: string, message?: string) {
