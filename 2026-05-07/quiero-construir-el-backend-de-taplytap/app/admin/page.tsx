@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { Pencil } from "lucide-react";
-import { BatchQrCreator } from "@/components/BatchQrCreator";
-import { DangerZone } from "@/components/DangerZone";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
@@ -52,6 +50,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   return (
     <main className="min-h-screen bg-[#f7faf9] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-4 inline-flex rounded-md border border-mint/30 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-mint">
+          Admin limpio v2
+        </div>
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-mint">TaplyTap Admin</p>
@@ -60,7 +61,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               Mostrando {visibleFrom}-{visibleTo} de {total}. Ordenados por fecha de creación ascendente.
             </p>
           </div>
-          <BatchQrCreator />
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={"/admin/qr" as never}
+              className="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white"
+            >
+              <Plus size={16} />
+              Crear QR
+            </Link>
+            <Link
+              href={"/admin/danger" as never}
+              className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700"
+            >
+              <Trash2 size={16} />
+              Zona de eliminación
+            </Link>
+          </div>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-md border border-gray-200 bg-white">
@@ -128,7 +144,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           visibleFrom={visibleFrom}
           visibleTo={visibleTo}
         />
-        <DangerZone />
       </div>
     </main>
   );

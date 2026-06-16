@@ -9,17 +9,23 @@ const confirmationText = "ELIMINAR TODO";
 export function DangerZone() {
   const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
+  const [acknowledged, setAcknowledged] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const canDelete = confirmation === confirmationText;
+  const canDelete = confirmation === confirmationText && acknowledged;
 
   function deleteAll() {
     setMessage(null);
     setError(null);
 
-    if (!canDelete) {
+    if (confirmation !== confirmationText) {
       setError(`Escribe exactamente ${confirmationText} para confirmar.`);
+      return;
+    }
+
+    if (!acknowledged) {
+      setError("Confirma que entiendes que esta acción no se puede deshacer.");
       return;
     }
 
@@ -43,6 +49,7 @@ export function DangerZone() {
       }
 
       setConfirmation("");
+      setAcknowledged(false);
       setMessage(`Se eliminaron ${result.deletedQrCodes} QR correctamente.`);
       router.refresh();
     });
@@ -70,6 +77,17 @@ export function DangerZone() {
                 className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                 placeholder={confirmationText}
               />
+            </label>
+            <label className="flex items-start gap-3 rounded-md border border-red-100 bg-red-50 px-3 py-3 text-sm text-red-900">
+              <input
+                checked={acknowledged}
+                onChange={(event) => setAcknowledged(event.target.checked)}
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 rounded border-red-300"
+              />
+              <span>
+                Entiendo que esto eliminará todos los QR y scans relacionados, y que esta acción no se puede deshacer.
+              </span>
             </label>
             <button
               type="button"
