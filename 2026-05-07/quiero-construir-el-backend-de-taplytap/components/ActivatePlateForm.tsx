@@ -9,6 +9,8 @@ type ActivatePlateFormProps = {
 };
 
 const emptyErrors: QrFormErrors = {};
+const whatsappHelpUrl =
+  "https://wa.me/523327940448?text=Hola%2C%20necesito%20ayuda%20para%20activar%20mi%20placa%20TaplyTap.";
 
 export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
   const [errors, setErrors] = useState<QrFormErrors>(emptyErrors);
@@ -67,53 +69,56 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-      <div className="grid gap-5">
-        <Field
-          label="Nombre del negocio"
-          name="business_name"
-          placeholder="Café Central"
-          required
-          error={errors.business_name}
-        />
-        <Field
-          label="Número de teléfono / WhatsApp"
-          name="whatsapp"
-          inputMode="tel"
-          placeholder="5512345678"
-          required
-          error={errors.whatsapp}
-        />
-        <Field
-          label="Correo electrónico"
-          name="owner_email"
-          type="email"
-          placeholder="dueno@negocio.com"
-          required
-          error={errors.owner_email}
-        />
-        <PlaceIdField error={errors.place_id} />
-      </div>
+    <>
+      <form onSubmit={onSubmit} className="mt-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+        <div className="grid gap-5">
+          <Field
+            label="Nombre del negocio"
+            name="business_name"
+            placeholder="Café Central"
+            required
+            error={errors.business_name}
+          />
+          <Field
+            label="Número de teléfono / WhatsApp"
+            name="whatsapp"
+            inputMode="tel"
+            placeholder="5512345678"
+            required
+            error={errors.whatsapp}
+          />
+          <Field
+            label="Correo electrónico"
+            name="owner_email"
+            type="email"
+            placeholder="dueno@negocio.com"
+            required
+            error={errors.owner_email}
+          />
+          <PlaceIdField error={errors.place_id} />
+        </div>
 
-      <p className="mt-6 rounded-md bg-[#f7faf9] px-4 py-3 text-sm leading-6 text-gray-600">
-        Podrás solicitar cambios a soporte cuando lo necesites.
-      </p>
-
-      {submitError ? (
-        <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {submitError}
+        <p className="mt-6 rounded-md bg-[#f7faf9] px-4 py-3 text-sm leading-6 text-gray-600">
+          Podrás solicitar cambios a soporte cuando lo necesites.
         </p>
-      ) : null}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-      >
-        {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-        {isPending ? "Activando..." : "Activar mi placa"}
-      </button>
-    </form>
+        {submitError ? (
+          <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {submitError}
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+        >
+          {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+          {isPending ? "Activando..." : "Activar mi placa"}
+        </button>
+      </form>
+      <WhatsAppHelpButton />
+    </>
   );
 }
 
@@ -123,24 +128,17 @@ function PlaceIdField({ error }: { error?: string }) {
       <span className="text-sm font-semibold text-ink">
         Place ID de Google Maps <span className="text-coral">*</span>
       </span>
-      <div
-        className={`flex overflow-hidden rounded-md border bg-white text-base text-ink transition focus-within:border-mint focus-within:ring-2 focus-within:ring-mint/20 ${
+      <input
+        name="place_id"
+        required
+        className={`rounded-md border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-gray-400 focus:border-mint focus:ring-2 focus:ring-mint/20 ${
           error ? "border-red-300" : "border-gray-300"
         }`}
-      >
-        <span className="hidden min-w-0 items-center border-r border-gray-200 bg-gray-50 px-3 text-sm text-gray-500 sm:flex">
-          https://search.google.com/local/writereview?placeid=
-        </span>
-        <input
-          name="place_id"
-          required
-          className="min-w-0 flex-1 px-3 py-3 outline-none placeholder:text-gray-400"
-          placeholder="Ej. ChIJxxxxxxxxxxxxxxxx"
-        />
-      </div>
+        placeholder="Ej. ChIJxxxxxxxxxxxx"
+      />
       {error ? <span className="text-sm text-red-600">{error}</span> : null}
       <span className="text-sm leading-6 text-gray-500">
-        Busca tu negocio, copia el Place ID y pégalo aquí.{" "}
+        Busca tu negocio, copia tu Place ID y pégalo aquí. Si necesitas ayuda, toca el botón de WhatsApp.{" "}
         <a
           href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
           target="_blank"
@@ -151,6 +149,19 @@ function PlaceIdField({ error }: { error?: string }) {
         </a>
       </span>
     </label>
+  );
+}
+
+function WhatsAppHelpButton() {
+  return (
+    <a
+      href={whatsappHelpUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="fixed bottom-5 right-5 z-20 inline-flex items-center justify-center rounded-full bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1ebe5d] focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:ring-offset-2"
+    >
+      ¿Necesitas ayuda?
+    </a>
   );
 }
 
