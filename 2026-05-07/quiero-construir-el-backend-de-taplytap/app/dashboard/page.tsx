@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -141,6 +142,7 @@ export default async function DashboardPage() {
           </section>
         )}
       </div>
+      <SupportWhatsAppBubble />
     </main>
   );
 }

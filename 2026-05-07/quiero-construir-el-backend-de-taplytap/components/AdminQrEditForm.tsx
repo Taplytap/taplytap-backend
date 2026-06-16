@@ -91,7 +91,7 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
         return;
       }
 
-      setMessage(result.message ?? "Email de recuperación enviado.");
+      setMessage(result.message ?? "Correo de recuperación enviado");
     });
   }
 

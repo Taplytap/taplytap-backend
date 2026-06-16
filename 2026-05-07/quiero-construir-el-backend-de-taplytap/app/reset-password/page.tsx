@@ -14,9 +14,14 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
     "use server";
 
     const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirm_password") ?? "");
 
     if (password.length < 8) {
       redirect("/reset-password?error=password");
+    }
+
+    if (password !== confirmPassword) {
+      redirect("/reset-password?error=mismatch");
     }
 
     const supabase = createSupabaseServerClient();
@@ -55,6 +60,17 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
             placeholder="Mínimo 8 caracteres"
           />
         </label>
+        <label className="grid gap-2">
+          <span className="text-sm font-semibold text-ink">Confirmar contraseña</span>
+          <input
+            name="confirm_password"
+            type="password"
+            minLength={8}
+            required
+            className="rounded-md border border-gray-300 bg-white px-3 py-2"
+            placeholder="Repite tu contraseña"
+          />
+        </label>
         <button className="rounded-md bg-ink px-4 py-2 font-semibold text-white">Guardar contraseña</button>
       </form>
     </main>
@@ -66,6 +82,10 @@ function getResetPasswordError(error?: string, message?: string) {
 
   if (error === "password") {
     return "La contraseña debe tener al menos 8 caracteres.";
+  }
+
+  if (error === "mismatch") {
+    return "Las contraseñas no coinciden.";
   }
 
   if (error === "auth") {

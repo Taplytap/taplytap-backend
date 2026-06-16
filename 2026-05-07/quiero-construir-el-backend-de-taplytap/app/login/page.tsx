@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { getSiteUrl } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -8,6 +9,7 @@ type PageProps = {
     error?: string;
     message?: string;
     next?: string;
+    reset?: string;
   };
 };
 
@@ -97,6 +99,29 @@ export default function LoginPage({ searchParams }: PageProps) {
     redirect(buildLoginUrl(next, { sent: "1" }));
   }
 
+  async function sendPasswordRecovery(formData: FormData) {
+    "use server";
+
+    const email = String(formData.get("recovery_email") ?? "").trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      redirect(buildLoginUrl("/dashboard", { error: "invalid-email" }));
+    }
+
+    try {
+      const supabase = createSupabaseServerClient();
+      const callbackUrl = new URL("/auth/callback", getSiteUrl());
+      callbackUrl.searchParams.set("next", "/reset-password");
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: callbackUrl.toString()
+      });
+    } catch {
+      // Keep the response intentionally neutral so we do not reveal whether an account exists.
+    }
+
+    redirect(buildLoginUrl("/dashboard", { reset: "sent" }));
+  }
+
   const next = getSafeLoginNext(searchParams?.next);
   const isAdminLogin = next === "/admin";
   const errorMessage = getLoginErrorMessage(searchParams?.error, searchParams?.message);
@@ -153,6 +178,39 @@ export default function LoginPage({ searchParams }: PageProps) {
           </button>
         </form>
       )}
+
+      {!isAdminLogin ? (
+        <section className="mt-6 rounded-md border border-gray-200 bg-white p-4">
+          {searchParams?.reset === "sent" ? (
+            <p className="text-sm leading-6 text-emerald-700">
+              Te enviamos un enlace para restablecer tu contraseña si el correo existe.
+            </p>
+          ) : (
+            <details className="group">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-mint">
+                ¿Olvidaste tu contraseña?
+              </summary>
+              <form action={sendPasswordRecovery} className="mt-4 grid gap-3">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-ink">Correo electrónico</span>
+                  <input
+                    name="recovery_email"
+                    type="email"
+                    required
+                    className="rounded-md border border-gray-300 bg-white px-3 py-2"
+                    placeholder="tu@email.com"
+                  />
+                </label>
+                <button className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-ink">
+                  Enviar enlace de recuperación
+                </button>
+              </form>
+            </details>
+          )}
+        </section>
+      ) : null}
+
+      <SupportWhatsAppBubble />
     </main>
   );
 }

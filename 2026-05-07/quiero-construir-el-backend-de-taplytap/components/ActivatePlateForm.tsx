@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { Check, CheckCircle2, Copy, Gift, Loader2, Sparkles } from "lucide-react";
+import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import type { QrFormErrors } from "@/lib/qr-form";
 
 type ActivatePlateFormProps = {
@@ -10,8 +11,6 @@ type ActivatePlateFormProps = {
 
 const emptyErrors: QrFormErrors = {};
 const giftCode = "BYX100";
-const whatsappHelpUrl =
-  "https://wa.me/523327940448?text=Hola%2C%20necesito%20ayuda%20para%20activar%20mi%20placa%20TaplyTap.";
 
 export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
   const [errors, setErrors] = useState<QrFormErrors>(emptyErrors);
@@ -63,78 +62,81 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
 
   if (isSuccess) {
     return (
-      <section className="relative mt-8 overflow-hidden rounded-lg border border-emerald-100 bg-white p-6 shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-700 sm:p-8">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <span className="absolute right-8 top-8 h-2 w-2 animate-ping rounded-full bg-mint/60" />
-          <span className="absolute left-10 top-24 h-1.5 w-1.5 animate-pulse rounded-full bg-coral/70" />
-          <span className="absolute bottom-20 right-16 h-2 w-2 animate-bounce rounded-full bg-emerald-300/70" />
-        </div>
-
-        <div className="relative">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-            <CheckCircle2 size={28} />
+      <>
+        <section className="relative mt-8 overflow-hidden rounded-lg border border-emerald-100 bg-white p-6 shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-700 sm:p-8">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <span className="absolute right-8 top-8 h-2 w-2 animate-ping rounded-full bg-mint/60" />
+            <span className="absolute left-10 top-24 h-1.5 w-1.5 animate-pulse rounded-full bg-coral/70" />
+            <span className="absolute bottom-20 right-16 h-2 w-2 animate-bounce rounded-full bg-emerald-300/70" />
           </div>
-          <h2 className="mt-6 text-2xl font-bold text-ink">¡Tu placa TaplyTap ya está activa!</h2>
-          <p className="mt-3 text-sm leading-6 text-gray-600">
-            Ya puedes probar el escaneo. Tus clientes llegarán directo a dejarte una reseña.
-          </p>
 
-          <div className="mt-6 rounded-lg border border-emerald-100 bg-[#f7faf9] p-5 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-mint shadow-sm">
-                <Gift size={22} />
-              </div>
-              <div>
-                <div className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-mint">
-                  <Sparkles size={13} />
-                  Regalo desbloqueado
-                </div>
-                <p className="mt-3 text-sm leading-6 text-gray-700">
-                  Por ser uno de nuestros clientes especiales, desbloqueaste $100 MXN de regalo para tu próxima placa.
-                </p>
-              </div>
+          <div className="relative">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+              <CheckCircle2 size={28} />
             </div>
-
-            <div className="mt-5 rounded-md border border-dashed border-emerald-200 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Código</p>
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-mono text-2xl font-bold tracking-wide text-ink">{giftCode}</span>
-                <button
-                  type="button"
-                  onClick={copyGiftCode}
-                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-ink transition hover:bg-gray-50"
-                >
-                  {isCopied ? <Check size={16} /> : <Copy size={16} />}
-                  {isCopied ? "Código copiado" : "Copiar código"}
-                </button>
-              </div>
-            </div>
-
-            <p className="mt-3 text-xs leading-5 text-gray-500">
-              Código válido durante 21 días. Aplica únicamente en tu próxima compra.
+            <h2 className="mt-6 text-2xl font-bold text-ink">¡Tu placa TaplyTap ya está activa!</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-600">
+              Ya puedes probar el escaneo. Tus clientes llegarán directo a dejarte una reseña.
             </p>
-          </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            <a
-              href="https://taplytap.io"
-              className="inline-flex w-full items-center justify-center rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-            >
-              Comprar otra placa
-            </a>
-            <a
-              href="/dashboard"
-              className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-gray-50"
-            >
-              Ir a mi dashboard
+            <div className="mt-6 rounded-lg border border-emerald-100 bg-[#f7faf9] p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-mint shadow-sm">
+                  <Gift size={22} />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-mint">
+                    <Sparkles size={13} />
+                    Regalo desbloqueado
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-gray-700">
+                    Por ser uno de nuestros clientes especiales, desbloqueaste $100 MXN de regalo para tu próxima placa.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-md border border-dashed border-emerald-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Código</p>
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="font-mono text-2xl font-bold tracking-wide text-ink">{giftCode}</span>
+                  <button
+                    type="button"
+                    onClick={copyGiftCode}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-ink transition hover:bg-gray-50"
+                  >
+                    {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                    {isCopied ? "Código copiado" : "Copiar código"}
+                  </button>
+                </div>
+              </div>
+
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                Código válido durante 21 días. Aplica únicamente en tu próxima compra.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <a
+                href="https://taplytap.io"
+                className="inline-flex w-full items-center justify-center rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              >
+                Comprar otra placa
+              </a>
+              <a
+                href="/dashboard"
+                className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-gray-50"
+              >
+                Ir a mi dashboard
+              </a>
+            </div>
+
+            <a href={plateUrl} className="mt-5 inline-flex text-sm font-semibold text-mint">
+              Probar mi placa
             </a>
           </div>
-
-          <a href={plateUrl} className="mt-5 inline-flex text-sm font-semibold text-mint">
-            Probar mi placa
-          </a>
-        </div>
-      </section>
+        </section>
+        <SupportWhatsAppBubble />
+      </>
     );
   }
 
@@ -198,7 +200,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
           {isPending ? "Activando..." : "Activar mi placa"}
         </button>
       </form>
-      <WhatsAppHelpButton />
+      <SupportWhatsAppBubble />
     </>
   );
 }
@@ -230,19 +232,6 @@ function PlaceIdField({ error }: { error?: string }) {
         </a>
       </span>
     </label>
-  );
-}
-
-function WhatsAppHelpButton() {
-  return (
-    <a
-      href={whatsappHelpUrl}
-      target="_blank"
-      rel="noreferrer"
-      className="fixed bottom-5 right-5 z-20 inline-flex items-center justify-center rounded-full bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1ebe5d] focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:ring-offset-2"
-    >
-      ¿Necesitas ayuda?
-    </a>
   );
 }
 

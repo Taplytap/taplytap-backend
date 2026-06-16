@@ -48,5 +48,5 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, message: "Email de recuperación enviado." });
+  return NextResponse.json({ ok: true, message: "Correo de recuperación enviado" });
 }
