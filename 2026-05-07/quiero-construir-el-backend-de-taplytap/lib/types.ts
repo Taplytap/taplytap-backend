@@ -11,10 +11,12 @@ export type QrCode = {
   contact_name: string | null;
   whatsapp: string | null;
   owner_email: string | null;
+  owner_user_id: string | null;
   shopify_order_number: string | null;
   created_at: string;
   updated_at: string;
   activated_at: string | null;
+  claimed_at: string | null;
 };
 
 export type ScanEvent = {

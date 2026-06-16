@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { assertAdminEnv, assertServerEnv, getAdminEmails } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/types";
 
 type CookieToSet = {
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
   const next = getSafeNextPath(requestUrl.searchParams.get("next"));
+  const loginPath = next.startsWith("/owner") ? "/owner/login" : "/login";
   const providerError = requestUrl.searchParams.get("error_description") ?? requestUrl.searchParams.get("error");
 
   let redirectUrl = new URL(next, request.url);
@@ -28,18 +30,17 @@ export async function GET(request: NextRequest) {
   }
 
   if (providerError) {
-    setRedirect(`/login?error=session&message=${encodeURIComponent(providerError)}`);
+    setRedirect(`${loginPath}?error=session&message=${encodeURIComponent(providerError)}`);
     return response;
   }
 
   if (!code && (!tokenHash || !type)) {
-    setRedirect("/login?error=session&message=El%20magic%20link%20no%20incluye%20un%20c%C3%B3digo%20v%C3%A1lido.");
+    setRedirect(`${loginPath}?error=session&message=El%20magic%20link%20no%20incluye%20un%20c%C3%B3digo%20v%C3%A1lido.`);
     return response;
   }
 
   try {
     assertServerEnv();
-    assertAdminEnv();
 
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
         });
 
     if (exchangeError) {
-      setRedirect(`/login?error=session&message=${encodeURIComponent(exchangeError.message)}`);
+      setRedirect(`${loginPath}?error=session&message=${encodeURIComponent(exchangeError.message)}`);
       return response;
     }
 
@@ -85,23 +86,46 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (userError || !user?.email) {
-      setRedirect("/login?error=session&message=Supabase%20no%20cre%C3%B3%20una%20sesi%C3%B3n%20v%C3%A1lida.");
+      setRedirect(`${loginPath}?error=session&message=Supabase%20no%20cre%C3%B3%20una%20sesi%C3%B3n%20v%C3%A1lida.`);
       return response;
     }
 
-    const isAdmin = getAdminEmails().includes(user.email.toLowerCase());
+    if (next.startsWith("/admin")) {
+      assertAdminEnv();
+      const isAdmin = getAdminEmails().includes(user.email.toLowerCase());
 
-    if (!isAdmin) {
-      setRedirect("/login?error=unauthorized&message=Este%20email%20no%20est%C3%A1%20autorizado%20para%20administrar%20TaplyTap.");
-      await supabase.auth.signOut();
-      return response;
+      if (!isAdmin) {
+        setRedirect("/login?error=unauthorized&message=Este%20email%20no%20est%C3%A1%20autorizado%20para%20administrar%20TaplyTap.");
+        await supabase.auth.signOut();
+        return response;
+      }
+    }
+
+    if (next.startsWith("/owner")) {
+      await claimOwnerPlates(user.id, user.email);
     }
 
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Auth configuration failed.";
-    setRedirect(`/login?error=config&message=${encodeURIComponent(message)}`);
+    setRedirect(`${loginPath}?error=config&message=${encodeURIComponent(message)}`);
     return response;
+  }
+}
+
+async function claimOwnerPlates(userId: string, email: string) {
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("qr_codes")
+    .update({
+      owner_user_id: userId,
+      claimed_at: new Date().toISOString()
+    })
+    .eq("owner_email", email.toLowerCase())
+    .is("owner_user_id", null);
+
+  if (error) {
+    throw new Error(error.message);
   }
 }
 

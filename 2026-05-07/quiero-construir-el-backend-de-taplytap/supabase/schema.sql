@@ -18,8 +18,10 @@ create table if not exists public.qr_codes (
   contact_name text,
   whatsapp text,
   owner_email text,
+  owner_user_id uuid references auth.users(id),
   shopify_order_number text,
   activated_at timestamptz,
+  claimed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint qr_codes_code_format check (code ~ '^[a-z0-9_-]{4,64}$'),
@@ -33,13 +35,19 @@ create table if not exists public.qr_codes (
 
 create index if not exists qr_codes_status_idx on public.qr_codes (status);
 create index if not exists qr_codes_owner_email_idx on public.qr_codes (owner_email);
+create index if not exists qr_codes_owner_user_id_idx on public.qr_codes (owner_user_id);
 
 alter table public.qr_codes
   add column if not exists public_url text,
   add column if not exists place_id text,
+  add column if not exists owner_user_id uuid references auth.users(id),
+  add column if not exists claimed_at timestamptz,
   add column if not exists contact_name text,
   add column if not exists whatsapp text,
   add column if not exists shopify_order_number text;
+
+create index if not exists qr_codes_owner_user_id_idx on public.qr_codes (owner_user_id);
+create index if not exists qr_codes_owner_email_idx on public.qr_codes (owner_email);
 
 create table if not exists public.scan_events (
   id uuid primary key default gen_random_uuid(),
