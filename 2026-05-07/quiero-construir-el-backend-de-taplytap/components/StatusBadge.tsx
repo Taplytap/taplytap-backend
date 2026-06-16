@@ -7,9 +7,9 @@ const labels: Record<QrStatus, string> = {
 };
 
 const styles: Record<QrStatus, string> = {
-  active: "bg-emerald-100 text-emerald-800",
-  inactive: "bg-amber-100 text-amber-800",
-  blocked: "bg-red-100 text-red-800"
+  active: "border border-emerald-200 bg-emerald-50 text-emerald-700",
+  inactive: "border border-brandBorder bg-brandSoft text-brand",
+  blocked: "border border-red-200 bg-red-50 text-red-700"
 };
 
 export function StatusBadge({ status }: { status: QrStatus }) {

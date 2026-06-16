@@ -84,44 +84,44 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
   if (isSuccess) {
     return (
       <>
-        <section className="relative mt-8 overflow-hidden rounded-lg border border-emerald-100 bg-white p-6 shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-700 sm:p-8">
+        <section className="relative mt-8 overflow-hidden rounded-2xl border border-line bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] animate-in fade-in slide-in-from-bottom-3 duration-700 sm:p-8">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <span className="absolute right-8 top-8 h-2 w-2 animate-ping rounded-full bg-mint/60" />
-            <span className="absolute left-10 top-24 h-1.5 w-1.5 animate-pulse rounded-full bg-coral/70" />
-            <span className="absolute bottom-20 right-16 h-2 w-2 animate-bounce rounded-full bg-emerald-300/70" />
+            <span className="absolute right-8 top-8 h-2 w-2 animate-ping rounded-full bg-brand/50" />
+            <span className="absolute left-10 top-24 h-1.5 w-1.5 animate-pulse rounded-full bg-success/60" />
+            <span className="absolute bottom-20 right-16 h-2 w-2 animate-bounce rounded-full bg-brandBorder" />
           </div>
 
           <div className="relative">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brandSoft text-brand">
               <CheckCircle2 size={28} />
             </div>
             <h2 className="mt-6 text-2xl font-bold text-ink">Tu placa TaplyTap ya está activa ✅</h2>
-            <p className="mt-3 text-sm leading-6 text-gray-600">
+            <p className="mt-3 text-sm leading-6 text-slateText">
               Ya puedes probar el escaneo. Tus clientes llegarán directo a dejarte una reseña.
             </p>
 
             {temporaryAccess ? (
-              <div className="mt-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mt-6 rounded-2xl border border-brandBorder bg-brandSoft p-5">
                 <h3 className="text-lg font-bold text-ink">Guarda tus accesos</h3>
                 <dl className="mt-4 grid gap-3">
-                  <div className="rounded-md bg-[#f7faf9] px-4 py-3">
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Correo</dt>
+                  <div className="rounded-xl bg-white px-4 py-3">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-slateText">Correo</dt>
                     <dd className="mt-1 break-all text-sm font-semibold text-ink">{temporaryAccess.email}</dd>
                   </div>
-                  <div className="rounded-md bg-[#f7faf9] px-4 py-3">
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contraseña</dt>
+                  <div className="rounded-xl bg-white px-4 py-3">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-slateText">Contraseña</dt>
                     <dd className="mt-1 break-all font-mono text-sm font-semibold text-ink">
                       {temporaryAccess.password}
                     </dd>
                   </div>
                 </dl>
-                <p className="mt-4 text-xs leading-5 text-gray-500">
+                <p className="mt-4 text-xs leading-5 text-slateText">
                   Guarda estos accesos. Los necesitarás para entrar a tu dashboard de TaplyTap.
                 </p>
                 <button
                   type="button"
                   onClick={copyAccesses}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-gray-50 sm:w-auto"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brandHover sm:w-auto"
                 >
                   {areAccessesCopied ? <Check size={16} /> : <Copy size={16} />}
                   {areAccessesCopied ? "Accesos copiados" : "Copiar accesos"}
@@ -129,30 +129,30 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
               </div>
             ) : null}
 
-            <div className="mt-6 rounded-lg border border-emerald-100 bg-[#f7faf9] p-5 shadow-sm">
+            <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-mint shadow-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brandSoft text-brand">
                   <Gift size={22} />
                 </div>
                 <div>
-                  <div className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-mint">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-brandSoft px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
                     <Sparkles size={13} />
                     Regalo desbloqueado
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-gray-700">
+                  <p className="mt-3 text-sm leading-6 text-slateText">
                     Por ser uno de nuestros clientes especiales, desbloqueaste $100 MXN de regalo para tu próxima placa.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-md border border-dashed border-emerald-200 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Código</p>
+              <div className="mt-5 rounded-xl border border-dashed border-brandBorder bg-brandSoft p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slateText">Código</p>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="font-mono text-2xl font-bold tracking-wide text-ink">{giftCode}</span>
                   <button
                     type="button"
                     onClick={copyGiftCode}
-                    className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-ink transition hover:bg-gray-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-brandBorder bg-white px-3 py-2 text-sm font-semibold text-brand transition hover:bg-brandSoft"
                   >
                     {isCopied ? <Check size={16} /> : <Copy size={16} />}
                     {isCopied ? "Código copiado" : "Copiar código"}
@@ -160,7 +160,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
                 </div>
               </div>
 
-              <p className="mt-3 text-xs leading-5 text-gray-500">
+              <p className="mt-3 text-xs leading-5 text-slateText">
                 Código válido durante 21 días. Aplica únicamente en tu próxima compra.
               </p>
             </div>
@@ -168,19 +168,19 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               <a
                 href="https://taplytap.io"
-                className="inline-flex w-full items-center justify-center rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brandHover"
               >
                 Comprar otra placa
               </a>
               <a
                 href="/dashboard"
-                className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-gray-50"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:bg-brandSoft"
               >
                 Ir a mi dashboard
               </a>
             </div>
 
-            <a href={plateUrl} className="mt-5 inline-flex text-sm font-semibold text-mint">
+            <a href={plateUrl} className="mt-5 inline-flex text-sm font-semibold text-brand">
               Probar mi placa
             </a>
           </div>
@@ -192,7 +192,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
 
   return (
     <>
-      <form onSubmit={onSubmit} className="mt-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+      <form onSubmit={onSubmit} className="mt-8 rounded-2xl border border-line bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8">
         <div className="grid gap-5">
           <Field
             label="Nombre del negocio"
@@ -231,7 +231,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
           <PlaceIdField error={errors.place_id} />
         </div>
 
-        <p className="mt-6 rounded-md bg-[#f7faf9] px-4 py-3 text-sm leading-6 text-gray-600">
+        <p className="mt-6 rounded-xl bg-brandSoft px-4 py-3 text-sm leading-6 text-slateText">
           Podrás solicitar cambios a soporte cuando lo necesites.
         </p>
 
@@ -244,7 +244,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3.5 text-base font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.24)] transition hover:bg-brandHover disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
           {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
           {isPending ? "Activando..." : "Activar mi placa"}
@@ -259,24 +259,24 @@ function PlaceIdField({ error }: { error?: string }) {
   return (
     <label className="grid gap-2">
       <span className="text-sm font-semibold text-ink">
-        Place ID de Google Maps <span className="text-coral">*</span>
+        Place ID de Google Maps <span className="text-error">*</span>
       </span>
       <input
         name="place_id"
         required
-        className={`rounded-md border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-gray-400 focus:border-mint focus:ring-2 focus:ring-mint/20 ${
-          error ? "border-red-300" : "border-gray-300"
+        className={`rounded-xl border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15 ${
+          error ? "border-error" : "border-line"
         }`}
         placeholder="Ej. ChIJxxxxxxxxxxxx"
       />
       {error ? <span className="text-sm text-red-600">{error}</span> : null}
-      <span className="text-sm leading-6 text-gray-500">
+      <span className="text-sm leading-6 text-slateText">
         Busca tu negocio, copia tu Place ID y pégalo aquí. Si necesitas ayuda, toca el botón de WhatsApp.{" "}
         <a
           href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-mint"
+          className="font-semibold text-brand"
         >
           Buscar mi Place ID
         </a>
@@ -312,7 +312,7 @@ function Field({
     <label className="grid gap-2">
       <span className="text-sm font-semibold text-ink">
         {label}
-        {required ? <span className="text-coral"> *</span> : null}
+        {required ? <span className="text-error"> *</span> : null}
       </span>
       <input
         name={name}
@@ -322,8 +322,8 @@ function Field({
         pattern={pattern}
         maxLength={maxLength}
         minLength={minLength}
-        className={`rounded-md border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-gray-400 focus:border-mint focus:ring-2 focus:ring-mint/20 ${
-          error ? "border-red-300" : "border-gray-300"
+        className={`rounded-xl border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15 ${
+          error ? "border-error" : "border-line"
         }`}
         placeholder={placeholder}
       />

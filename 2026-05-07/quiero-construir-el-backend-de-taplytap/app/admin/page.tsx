@@ -89,27 +89,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const visibleTo = Math.min(to + 1, total);
 
   return (
-    <main className="min-h-screen bg-[#f7faf9] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-mint">TaplyTap Admin</p>
-            <h1 className="mt-2 text-3xl font-bold text-ink">Códigos QR</h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap Admin</p>
+            <h1 className="mt-2 text-4xl font-bold tracking-tight text-ink">Códigos QR</h1>
+            <p className="mt-2 text-sm text-slateText">
               Mostrando {visibleFrom}-{visibleTo} de {total}. Ordenados por fecha de creación ascendente.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
               href={"/admin/qr" as never}
-              className="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.18)] transition hover:bg-brandHover"
             >
               <Plus size={16} />
               Crear QR
             </Link>
             <Link
               href={"/admin/danger" as never}
-              className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700"
+              className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-slateText transition hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 size={16} />
               Zona de eliminación
@@ -117,14 +117,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </div>
 
-        <form className="mt-8 rounded-md border border-gray-200 bg-white p-4 shadow-sm" action="/admin">
+        <form className="mt-8 rounded-2xl border border-line bg-white p-4 shadow-sm" action="/admin">
           <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-ink">Buscar</span>
               <input
                 name="q"
                 defaultValue={query}
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-mint focus:ring-2 focus:ring-mint/20"
+                className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
                 placeholder="Código, negocio, WhatsApp, email o status"
               />
             </label>
@@ -133,7 +133,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <select
                 name="filter"
                 defaultValue={filter}
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-mint focus:ring-2 focus:ring-mint/20"
+                className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
               >
                 {filterOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -143,16 +143,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </select>
             </label>
             <input type="hidden" name="perPage" value={perPage} />
-            <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white">
+            <button className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover">
               Aplicar
             </button>
           </div>
         </form>
 
-        <div className="mt-4 overflow-hidden rounded-md border border-gray-200 bg-white">
+        <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <table className="min-w-full divide-y divide-line text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slateText">
                 <tr>
                   <th className="px-4 py-3">Código</th>
                   <th className="px-4 py-3">Estado</th>
@@ -168,37 +168,37 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <th className="px-4 py-3">Editar</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-line">
                 {(qrCodes ?? []).map((qr) => (
                   <tr key={qr.id}>
                     <td className="px-4 py-3 font-mono text-xs text-ink">{qr.code}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={qr.status} />
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{qr.business_name ?? "Sin activar"}</td>
-                    <td className="max-w-xs truncate px-4 py-3 font-mono text-xs text-gray-600">
+                    <td className="px-4 py-3 text-slateText">{qr.business_name ?? "Sin activar"}</td>
+                    <td className="max-w-xs truncate px-4 py-3 font-mono text-xs text-slateText">
                       {qr.public_url ?? buildPublicQrUrl(qr.code)}
                     </td>
-                    <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs text-gray-600">
+                    <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs text-slateText">
                       {qr.place_id ?? "-"}
                     </td>
-                    <td className="max-w-xs truncate px-4 py-3 text-gray-700">
+                    <td className="max-w-xs truncate px-4 py-3 text-slateText">
                       {qr.destination_url ?? "-"}
                     </td>
-                    <td className="max-w-[12rem] truncate px-4 py-3 text-gray-700">
+                    <td className="max-w-[12rem] truncate px-4 py-3 text-slateText">
                       {qr.owner_email ?? "-"}
                     </td>
-                    <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs text-gray-600">
+                    <td className="max-w-[12rem] truncate px-4 py-3 font-mono text-xs text-slateText">
                       {qr.owner_user_id ?? "-"}
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
+                    <td className="px-4 py-3 text-slateText">
                       {qr.claimed_at ? new Date(qr.claimed_at).toLocaleDateString("es-MX") : "-"}
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{scanCounts.get(qr.id) ?? 0}</td>
+                    <td className="px-4 py-3 text-slateText">{scanCounts.get(qr.id) ?? 0}</td>
                     <td className="px-4 py-3">
                       <a
                         href={buildPublicQrUrl(qr.code)}
-                        className="font-mono text-xs font-semibold text-mint"
+                        className="font-mono text-xs font-semibold text-brand"
                       >
                         /user/{qr.code}
                       </a>
@@ -206,7 +206,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/qr-codes/${qr.code}/edit`}
-                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink"
+                        className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-brandSoft"
                       >
                         <Pencil size={14} />
                         Editar
@@ -267,18 +267,18 @@ function Pagination({
   };
 
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-sm text-slateText shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div>
         Página {page} de {totalPages}. Mostrando {visibleFrom}-{visibleTo} de {total}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Por página</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-slateText">Por página</span>
         {perPageOptions.map((option) => (
           <Link
             key={option}
             href={buildPageHref(1, option)}
             className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${
-              option === perPage ? "border-ink bg-ink text-white" : "border-gray-300 text-ink"
+              option === perPage ? "border-brand bg-brand text-white" : "border-line text-ink"
             }`}
           >
             {option}
@@ -286,7 +286,7 @@ function Pagination({
         ))}
         <Link
           href={buildPageHref(previousPage)}
-          className={`rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink ${
+          className={`rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-ink ${
             page <= 1 ? "pointer-events-none opacity-50" : ""
           }`}
         >
@@ -294,7 +294,7 @@ function Pagination({
         </Link>
         <Link
           href={buildPageHref(nextPage)}
-          className={`rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink ${
+          className={`rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-ink ${
             page >= totalPages ? "pointer-events-none opacity-50" : ""
           }`}
         >

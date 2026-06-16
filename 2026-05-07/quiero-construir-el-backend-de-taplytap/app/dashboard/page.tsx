@@ -66,43 +66,43 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7faf9] px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <p className="text-sm font-semibold uppercase tracking-wide text-mint">TaplyTap</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap</p>
         <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-ink">Mis placas</h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <h1 className="text-4xl font-bold tracking-tight text-ink">Mis placas</h1>
+            <p className="mt-2 text-base leading-7 text-slateText">
               Consulta tus placas activas, su estado y los escaneos registrados.
             </p>
           </div>
           <a
             href="https://taplytap.io"
-            className="rounded-md bg-ink px-4 py-2 text-center text-sm font-semibold text-white"
+            className="rounded-xl bg-brand px-5 py-3 text-center text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.24)] transition hover:bg-brandHover"
           >
             Comprar otra placa
           </a>
         </div>
 
         {(plates ?? []).length === 0 ? (
-          <section className="mt-8 rounded-md border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="mt-8 rounded-2xl border border-line bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-ink">Aún no encontramos placas para este correo.</h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm leading-6 text-slateText">
               Verifica que la placa haya sido activada con el mismo email con el que iniciaste sesión.
             </p>
           </section>
         ) : (
           <section className="mt-8 grid gap-4">
             {(plates ?? []).map((plate) => (
-              <article key={plate.id} className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
+              <article key={plate.id} className="rounded-2xl border border-line bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                   <div>
                     <h2 className="text-xl font-semibold text-ink">
                       {plate.business_name ?? "Placa TaplyTap"}
                     </h2>
-                    <p className="mt-1 font-mono text-xs text-gray-500">{plate.code}</p>
+                    <p className="mt-1 font-mono text-xs text-slateText">{plate.code}</p>
                   </div>
-                  <span className="w-fit rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  <span className="w-fit rounded-full border border-brandBorder bg-brandSoft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
                     {plate.status}
                   </span>
                 </div>
@@ -119,20 +119,20 @@ export default async function DashboardPage() {
                       href={plate.destination_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-ink"
+                      className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
                     >
                       Abrir link de reseña
                     </a>
                   ) : null}
                   <Link
                     href={`/user/${plate.code}`}
-                    className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-ink"
+                    className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
                   >
                     Probar placa
                   </Link>
                   <a
                     href="https://taplytap.io"
-                    className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white"
+                    className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover"
                   >
                     Comprar otra placa
                   </a>
@@ -149,9 +149,9 @@ export default async function DashboardPage() {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-md border border-gray-100 bg-gray-50 px-4 py-3">
-      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold text-ink">{value}</dd>
+    <div className="rounded-xl border border-brandBorder bg-brandSoft px-4 py-3">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-slateText">{label}</dt>
+      <dd className="mt-1 text-2xl font-bold text-ink">{value}</dd>
     </div>
   );
 }

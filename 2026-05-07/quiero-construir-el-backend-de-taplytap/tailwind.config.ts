@@ -9,9 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#111827",
-        mint: "#14b8a6",
-        coral: "#f97316"
+        brand: "#006DFF",
+        brandHover: "#005BE0",
+        brandSoft: "#EEF6FF",
+        brandBorder: "#B8D7FF",
+        ink: "#0F172A",
+        slateText: "#64748B",
+        line: "#E2E8F0",
+        success: "#10B981",
+        error: "#EF4444",
+        mint: "#006DFF",
+        coral: "#EF4444"
       }
     }
   },

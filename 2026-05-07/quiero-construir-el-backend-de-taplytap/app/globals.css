@@ -7,11 +7,12 @@
 }
 
 body {
-  background: #f7faf9;
-  color: #111827;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
