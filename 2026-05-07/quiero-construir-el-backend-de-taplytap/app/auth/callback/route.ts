@@ -137,6 +137,7 @@ function getSafeNextPath(next: string | null) {
     if (!decoded.startsWith("/") || decoded.startsWith("//")) return "/dashboard";
     if (decoded === "/owner") return "/dashboard";
     if (decoded === "/dashboard") return "/dashboard";
+    if (decoded === "/reset-password") return "/reset-password";
     if (decoded.startsWith("/admin")) return decoded;
     return "/dashboard";
   } catch {

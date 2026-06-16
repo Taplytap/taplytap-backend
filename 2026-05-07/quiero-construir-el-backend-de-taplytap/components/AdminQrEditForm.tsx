@@ -70,6 +70,31 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
     });
   }
 
+  async function sendPasswordReset() {
+    setErrors(emptyErrors);
+    setMessage(null);
+    setSubmitError(null);
+
+    startTransition(async () => {
+      const response = await fetch(`/api/admin/qr-codes/${qrCode.code}/password-reset`, {
+        method: "POST"
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { ok: true; message?: string }
+        | { ok?: false; error?: string }
+        | null;
+
+      if (!response.ok || result?.ok !== true) {
+        const errorResult = result as { error?: string } | null;
+        setSubmitError(errorResult?.error ?? "No pudimos enviar la recuperación de contraseña.");
+        return;
+      }
+
+      setMessage(result.message ?? "Email de recuperación enviado.");
+    });
+  }
+
   return (
     <form
       className="mt-8 rounded-md border border-gray-200 bg-white p-6 shadow-sm"
@@ -190,6 +215,14 @@ export function AdminQrEditForm({ qrCode }: AdminQrEditFormProps) {
           className="rounded-md border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Asignar owner por email
+        </button>
+        <button
+          type="button"
+          disabled={isPending || !qrCode.owner_email}
+          onClick={sendPasswordReset}
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Enviar recuperación de contraseña
         </button>
         <button
           type="button"

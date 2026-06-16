@@ -12,7 +12,49 @@ type PageProps = {
 };
 
 export default function LoginPage({ searchParams }: PageProps) {
-  async function signIn(formData: FormData) {
+  async function signInWithPassword(formData: FormData) {
+    "use server";
+
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      redirect(buildLoginUrl("/dashboard", { error: "invalid-email" }));
+    }
+
+    if (!password) {
+      redirect(buildLoginUrl("/dashboard", { error: "missing-password" }));
+    }
+
+    let authErrorMessage: string | null = null;
+
+    try {
+      const supabase = createSupabaseServerClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        authErrorMessage = error.message;
+      }
+    } catch (error) {
+      authErrorMessage = error instanceof Error ? error.message : "No se pudo contactar Supabase.";
+    }
+
+    if (authErrorMessage) {
+      const params = new URLSearchParams({
+        error: "auth",
+        message: authErrorMessage
+      });
+
+      redirect(buildLoginUrl("/dashboard", Object.fromEntries(params)));
+    }
+
+    redirect("/dashboard");
+  }
+
+  async function signInWithMagicLink(formData: FormData) {
     "use server";
 
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -68,7 +110,7 @@ export default function LoginPage({ searchParams }: PageProps) {
       <p className="mt-3 text-gray-600">
         {isAdminLogin
           ? "Recibe un enlace seguro en tu correo de administrador."
-          : "Recibe un enlace seguro para ver tus placas TaplyTap."}
+          : "Usa el correo y contraseña que creaste al activar tu placa."}
       </p>
 
       {errorMessage ? (
@@ -82,7 +124,7 @@ export default function LoginPage({ searchParams }: PageProps) {
           Revisa tu correo para continuar.
         </div>
       ) : (
-        <form action={signIn} className="mt-8 grid gap-4">
+        <form action={isAdminLogin ? signInWithMagicLink : signInWithPassword} className="mt-8 grid gap-4">
           <input type="hidden" name="next" value={next} />
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-ink">Email</span>
@@ -94,7 +136,21 @@ export default function LoginPage({ searchParams }: PageProps) {
               placeholder={isAdminLogin ? "admin@taplytap.io" : "tu@email.com"}
             />
           </label>
-          <button className="rounded-md bg-ink px-4 py-2 font-semibold text-white">Enviar enlace</button>
+          {!isAdminLogin ? (
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-ink">Contraseña</span>
+              <input
+                name="password"
+                type="password"
+                required
+                className="rounded-md border border-gray-300 bg-white px-3 py-2"
+                placeholder="Tu contraseña"
+              />
+            </label>
+          ) : null}
+          <button className="rounded-md bg-ink px-4 py-2 font-semibold text-white">
+            {isAdminLogin ? "Enviar enlace" : "Entrar"}
+          </button>
         </form>
       )}
     </main>
@@ -123,8 +179,12 @@ function getLoginErrorMessage(error?: string, message?: string) {
     return "Ingresa un correo válido.";
   }
 
+  if (error === "missing-password") {
+    return "Ingresa tu contraseña.";
+  }
+
   if (error === "auth") {
-    return `Supabase no pudo enviar el magic link: ${message ?? "revisa las variables de entorno."}`;
+    return message ?? "No pudimos iniciar sesión. Revisa tu correo y contraseña.";
   }
 
   if (error === "session") {

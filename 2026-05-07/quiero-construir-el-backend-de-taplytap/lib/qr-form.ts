@@ -7,6 +7,7 @@ export type QrFormValues = {
   contact_name: string;
   whatsapp: string;
   owner_email: string;
+  password: string;
   destination_url: string;
   place_id: string;
   shopify_order_number: string;
@@ -25,6 +26,7 @@ export function readQrFormValues(formData: FormData): QrFormValues {
     contact_name: String(formData.get("contact_name") ?? "").trim(),
     whatsapp: String(formData.get("whatsapp") ?? "").trim(),
     owner_email: String(formData.get("owner_email") ?? "").trim().toLowerCase(),
+    password: String(formData.get("password") ?? ""),
     destination_url: String(formData.get("destination_url") ?? "").trim(),
     place_id: normalizePlaceId(String(formData.get("place_id") ?? "")),
     shopify_order_number: String(formData.get("shopify_order_number") ?? "").trim()
@@ -38,8 +40,8 @@ export function validateActivation(values: QrFormValues) {
     errors.business_name = "Ingresa el nombre del negocio.";
   }
 
-  if (!values.whatsapp || values.whatsapp.replace(/\D/g, "").length < 10) {
-    errors.whatsapp = "Ingresa un WhatsApp con al menos 10 dígitos.";
+  if (!/^\d{10}$/.test(values.whatsapp)) {
+    errors.whatsapp = "Ingresa un WhatsApp de 10 dígitos numéricos.";
   }
 
   if (!values.owner_email) {
@@ -50,6 +52,10 @@ export function validateActivation(values: QrFormValues) {
 
   if (!values.place_id) {
     errors.place_id = "Ingresa el Place ID de Google Maps.";
+  }
+
+  if (!values.password || values.password.length < 8) {
+    errors.password = "Crea una contraseña de al menos 8 caracteres.";
   }
 
   if (values.destination_url && !isSafeDestinationUrl(values.destination_url)) {

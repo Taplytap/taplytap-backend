@@ -123,10 +123,10 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
               Comprar otra placa
             </a>
             <a
-              href="/login"
+              href="/dashboard"
               className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-gray-50"
             >
-              Crear mi acceso
+              Ir a mi dashboard
             </a>
           </div>
 
@@ -153,6 +153,8 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
             label="Número de teléfono / WhatsApp"
             name="whatsapp"
             inputMode="tel"
+            pattern="[0-9]{10}"
+            maxLength={10}
             placeholder="5512345678"
             required
             error={errors.whatsapp}
@@ -164,6 +166,15 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
             placeholder="dueno@negocio.com"
             required
             error={errors.owner_email}
+          />
+          <Field
+            label="Contraseña"
+            name="password"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            minLength={8}
+            required
+            error={errors.password}
           />
           <PlaceIdField error={errors.place_id} />
         </div>
@@ -242,6 +253,9 @@ function Field({
   placeholder,
   required,
   inputMode,
+  pattern,
+  maxLength,
+  minLength,
   error
 }: {
   label: string;
@@ -250,6 +264,9 @@ function Field({
   placeholder?: string;
   required?: boolean;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  pattern?: string;
+  maxLength?: number;
+  minLength?: number;
   error?: string;
 }) {
   return (
@@ -263,6 +280,9 @@ function Field({
         type={type}
         required={required}
         inputMode={inputMode}
+        pattern={pattern}
+        maxLength={maxLength}
+        minLength={minLength}
         className={`rounded-md border bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-gray-400 focus:border-mint focus:ring-2 focus:ring-mint/20 ${
           error ? "border-red-300" : "border-gray-300"
         }`}
