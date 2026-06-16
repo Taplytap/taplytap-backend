@@ -4,15 +4,26 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { QrStatus } from "@/lib/types";
 
 type AdminPageProps = {
   searchParams?: {
     page?: string;
     perPage?: string;
+    q?: string;
+    filter?: string;
   };
 };
 
 const perPageOptions = [50, 100, 250];
+const filterOptions = [
+  { value: "all", label: "Todos" },
+  { value: "active", label: "Activos" },
+  { value: "inactive", label: "Inactivos" },
+  { value: "blocked", label: "Bloqueados" },
+  { value: "claimed", label: "Reclamados" },
+  { value: "unclaimed", label: "Sin reclamar" }
+];
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   await requireAdmin();
@@ -20,14 +31,44 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const requestedPerPage = Number(searchParams?.perPage ?? 50);
   const perPage = perPageOptions.includes(requestedPerPage) ? requestedPerPage : 50;
   const page = Math.max(Number(searchParams?.page ?? 1), 1);
+  const query = String(searchParams?.q ?? "").trim();
+  const filter = filterOptions.some((option) => option.value === searchParams?.filter)
+    ? String(searchParams?.filter)
+    : "all";
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
   const supabase = createSupabaseAdminClient();
-  const { data: qrCodes, error: qrError, count } = await supabase
+  let qrQuery = supabase
     .from("qr_codes")
     .select("*", { count: "exact" })
-    .order("created_at", { ascending: true })
-    .range(from, to);
+    .order("created_at", { ascending: true });
+
+  if (query) {
+    const escapedQuery = escapeSupabasePattern(query);
+    qrQuery = qrQuery.or(
+      [
+        `code.ilike.%${escapedQuery}%`,
+        `business_name.ilike.%${escapedQuery}%`,
+        `whatsapp.ilike.%${escapedQuery}%`,
+        `owner_email.ilike.%${escapedQuery}%`,
+        `status.ilike.%${escapedQuery}%`
+      ].join(",")
+    );
+  }
+
+  if (["active", "inactive", "blocked"].includes(filter)) {
+    qrQuery = qrQuery.eq("status", filter as QrStatus);
+  }
+
+  if (filter === "claimed") {
+    qrQuery = qrQuery.not("owner_user_id", "is", null);
+  }
+
+  if (filter === "unclaimed") {
+    qrQuery = qrQuery.is("owner_user_id", null);
+  }
+
+  const { data: qrCodes, error: qrError, count } = await qrQuery.range(from, to);
 
   if (qrError) {
     throw new Error(qrError.message);
@@ -76,7 +117,39 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </div>
 
-        <div className="mt-8 overflow-hidden rounded-md border border-gray-200 bg-white">
+        <form className="mt-8 rounded-md border border-gray-200 bg-white p-4 shadow-sm" action="/admin">
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-ink">Buscar</span>
+              <input
+                name="q"
+                defaultValue={query}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-mint focus:ring-2 focus:ring-mint/20"
+                placeholder="Código, negocio, WhatsApp, email o status"
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-ink">Filtro</span>
+              <select
+                name="filter"
+                defaultValue={filter}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-mint focus:ring-2 focus:ring-mint/20"
+              >
+                {filterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <input type="hidden" name="perPage" value={perPage} />
+            <button className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white">
+              Aplicar
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-4 overflow-hidden rounded-md border border-gray-200 bg-white">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -152,6 +225,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           total={total}
           visibleFrom={visibleFrom}
           visibleTo={visibleTo}
+          query={query}
+          filter={filter}
         />
       </div>
     </main>
@@ -164,7 +239,9 @@ function Pagination({
   perPage,
   total,
   visibleFrom,
-  visibleTo
+  visibleTo,
+  query,
+  filter
 }: {
   page: number;
   totalPages: number;
@@ -172,9 +249,22 @@ function Pagination({
   total: number;
   visibleFrom: number;
   visibleTo: number;
+  query: string;
+  filter: string;
 }) {
   const previousPage = Math.max(page - 1, 1);
   const nextPage = Math.min(page + 1, totalPages);
+  const buildPageHref = (nextPageNumber: number, nextPerPage = perPage) => {
+    const params = new URLSearchParams({
+      page: String(nextPageNumber),
+      perPage: String(nextPerPage)
+    });
+
+    if (query) params.set("q", query);
+    if (filter !== "all") params.set("filter", filter);
+
+    return `/admin?${params.toString()}` as never;
+  };
 
   return (
     <div className="mt-4 flex flex-col gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
@@ -186,7 +276,7 @@ function Pagination({
         {perPageOptions.map((option) => (
           <Link
             key={option}
-            href={`/admin?page=1&perPage=${option}`}
+            href={buildPageHref(1, option)}
             className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${
               option === perPage ? "border-ink bg-ink text-white" : "border-gray-300 text-ink"
             }`}
@@ -195,7 +285,7 @@ function Pagination({
           </Link>
         ))}
         <Link
-          href={`/admin?page=${previousPage}&perPage=${perPage}`}
+          href={buildPageHref(previousPage)}
           className={`rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink ${
             page <= 1 ? "pointer-events-none opacity-50" : ""
           }`}
@@ -203,7 +293,7 @@ function Pagination({
           Anterior
         </Link>
         <Link
-          href={`/admin?page=${nextPage}&perPage=${perPage}`}
+          href={buildPageHref(nextPage)}
           className={`rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-ink ${
             page >= totalPages ? "pointer-events-none opacity-50" : ""
           }`}
@@ -213,4 +303,8 @@ function Pagination({
       </div>
     </div>
   );
+}
+
+function escapeSupabasePattern(value: string) {
+  return value.replace(/[%_]/g, (character) => `\\${character}`);
 }

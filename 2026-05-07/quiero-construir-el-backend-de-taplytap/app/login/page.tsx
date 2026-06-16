@@ -124,9 +124,12 @@ export default function LoginPage({ searchParams }: PageProps) {
 
       <section className="mt-6 rounded-md border border-gray-200 bg-white p-4">
         {searchParams?.reset === "sent" ? (
-          <p className="text-sm leading-6 text-emerald-700">
-            Te enviamos un enlace para restablecer tu contraseña si el correo existe.
-          </p>
+          <div className="grid gap-2 text-sm leading-6">
+            <p className="text-emerald-700">
+              Te enviamos un enlace para restablecer tu contraseña si el correo existe.
+            </p>
+            <p className="text-gray-600">Si no recibes el correo, escríbenos por WhatsApp.</p>
+          </div>
         ) : (
           <details className="group">
             <summary className="cursor-pointer list-none text-sm font-semibold text-mint">
@@ -146,6 +149,9 @@ export default function LoginPage({ searchParams }: PageProps) {
               <button className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-ink">
                 Enviar enlace de recuperación
               </button>
+              <p className="text-xs leading-5 text-gray-500">
+                Si no recibes el correo, escríbenos por WhatsApp.
+              </p>
             </form>
           </details>
         )}

@@ -17,6 +17,8 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [areAccessesCopied, setAreAccessesCopied] = useState(false);
+  const [temporaryAccess, setTemporaryAccess] = useState<{ email: string; password: string } | null>(null);
   const [isPending, startTransition] = useTransition();
   const plateUrl = useMemo(() => `/user/${code}`, [code]);
 
@@ -31,12 +33,30 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
     window.setTimeout(() => setIsCopied(false), 2200);
   }
 
+  async function copyAccesses() {
+    if (!temporaryAccess) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        `Correo: ${temporaryAccess.email}\nContraseña: ${temporaryAccess.password}`
+      );
+    } catch {
+      return;
+    }
+
+    setAreAccessesCopied(true);
+    window.setTimeout(() => setAreAccessesCopied(false), 2200);
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrors(emptyErrors);
     setSubmitError(null);
+    setTemporaryAccess(null);
 
     const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("owner_email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
 
     startTransition(async () => {
       const response = await fetch(`/api/activate/${code}`, {
@@ -56,6 +76,7 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
         return;
       }
 
+      setTemporaryAccess({ email, password });
       setIsSuccess(true);
     });
   }
@@ -74,10 +95,39 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
               <CheckCircle2 size={28} />
             </div>
-            <h2 className="mt-6 text-2xl font-bold text-ink">¡Tu placa TaplyTap ya está activa!</h2>
+            <h2 className="mt-6 text-2xl font-bold text-ink">Tu placa TaplyTap ya está activa ✅</h2>
             <p className="mt-3 text-sm leading-6 text-gray-600">
               Ya puedes probar el escaneo. Tus clientes llegarán directo a dejarte una reseña.
             </p>
+
+            {temporaryAccess ? (
+              <div className="mt-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-bold text-ink">Guarda tus accesos</h3>
+                <dl className="mt-4 grid gap-3">
+                  <div className="rounded-md bg-[#f7faf9] px-4 py-3">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Correo</dt>
+                    <dd className="mt-1 break-all text-sm font-semibold text-ink">{temporaryAccess.email}</dd>
+                  </div>
+                  <div className="rounded-md bg-[#f7faf9] px-4 py-3">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contraseña</dt>
+                    <dd className="mt-1 break-all font-mono text-sm font-semibold text-ink">
+                      {temporaryAccess.password}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-4 text-xs leading-5 text-gray-500">
+                  Guarda estos accesos. Los necesitarás para entrar a tu dashboard de TaplyTap.
+                </p>
+                <button
+                  type="button"
+                  onClick={copyAccesses}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-3 text-sm font-semibold text-ink transition hover:bg-gray-50 sm:w-auto"
+                >
+                  {areAccessesCopied ? <Check size={16} /> : <Copy size={16} />}
+                  {areAccessesCopied ? "Accesos copiados" : "Copiar accesos"}
+                </button>
+              </div>
+            ) : null}
 
             <div className="mt-6 rounded-lg border border-emerald-100 bg-[#f7faf9] p-5 shadow-sm">
               <div className="flex items-start gap-3">
