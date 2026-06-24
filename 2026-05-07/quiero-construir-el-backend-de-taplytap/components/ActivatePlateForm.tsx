@@ -285,7 +285,7 @@ function PlaceIdField({ error }: { error?: string }) {
         <p className="text-sm font-semibold text-ink">¿No sabes cuál seleccionar?</p>
         <p className="mt-1 text-sm text-slateText">Sigue este ejemplo:</p>
         <img
-          src="/place-id-help.gif"
+          src="/place-id-help2.gif"
           alt="Cómo encontrar tu Place ID"
           className="mt-2 max-w-[260px] rounded-xl border border-gray-200"
         />
