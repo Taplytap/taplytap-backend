@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, MessageCircle, Pencil, Plus, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
@@ -16,6 +16,8 @@ type AdminPageProps = {
 };
 
 const perPageOptions = [50, 100, 250];
+const adminSupportUrl =
+  "https://wa.me/523327940448?text=Hola%2C%20necesito%20ayuda%20con%20el%20admin%20de%20TaplyTap.";
 const filterOptions = [
   { value: "all", label: "Todos" },
   { value: "active", label: "Activos" },
@@ -87,35 +89,50 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const totalPages = Math.max(Math.ceil(total / perPage), 1);
   const visibleFrom = total === 0 ? 0 : from + 1;
   const visibleTo = Math.min(to + 1, total);
+  const visibleActive = (qrCodes ?? []).filter((qr) => qr.status === "active").length;
+  const visibleScans = Array.from(scanCounts.values()).reduce((sum, value) => sum + value, 0);
+  const lastUpdated = (qrCodes ?? []).reduce<string | null>((latest, qr) => {
+    if (!latest || qr.updated_at > latest) return qr.updated_at;
+    return latest;
+  }, null);
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap Admin</p>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight text-ink">Códigos QR</h1>
-            <p className="mt-2 text-sm text-slateText">
-              Mostrando {visibleFrom}-{visibleTo} de {total}. Ordenados por fecha de creación ascendente.
-            </p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">Hola, Admin</h1>
+            <p className="mt-2 text-base text-slateText">Administra tus placas TaplyTap</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <Link
               href={"/admin/qr" as never}
-              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.18)] transition hover:bg-brandHover"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.18)] transition hover:bg-brandHover"
             >
               <Plus size={16} />
               Crear QR
             </Link>
             <Link
               href={"/admin/danger" as never}
-              className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-slateText transition hover:bg-red-50 hover:text-red-700"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-slateText transition hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 size={16} />
               Zona de eliminación
             </Link>
           </div>
         </div>
+
+        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <AdminMetric label="Placas activas" value={visibleActive} helper="En esta vista" />
+          <AdminMetric label="Escaneos" value={visibleScans} helper="En esta vista" />
+          <AdminMetric
+            label="Última actividad"
+            value={lastUpdated ? new Date(lastUpdated).toLocaleDateString("es-MX") : "-"}
+            helper="Actualización de placa"
+            className="col-span-2 lg:col-span-1"
+          />
+        </section>
 
         <form className="mt-8 rounded-2xl border border-line bg-white p-4 shadow-sm" action="/admin">
           <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
@@ -149,7 +166,76 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </form>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+        <section className="mt-4 grid gap-4 md:hidden">
+          {(qrCodes ?? []).length === 0 ? (
+            <div className="rounded-2xl border border-line bg-white p-6 text-center shadow-sm">
+              <p className="font-semibold text-ink">No encontramos placas</p>
+              <p className="mt-2 text-sm text-slateText">Prueba con otra búsqueda o filtro.</p>
+            </div>
+          ) : (
+            (qrCodes ?? []).map((qr) => {
+              const publicUrl = qr.public_url ?? buildPublicQrUrl(qr.code);
+
+              return (
+                <article key={qr.id} className="rounded-2xl border border-line bg-white p-5 shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-lg font-bold text-ink">{qr.business_name ?? "Placa sin activar"}</p>
+                      <p className="mt-1 font-mono text-xs text-slateText">{qr.code}</p>
+                    </div>
+                    <StatusBadge status={qr.status} />
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-brandSoft px-3 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slateText">Escaneos</p>
+                      <p className="mt-1 text-2xl font-bold text-ink">{scanCounts.get(qr.id) ?? 0}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 px-3 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slateText">Cuenta</p>
+                      <p className="mt-1 truncate text-sm font-semibold text-ink">
+                        {qr.owner_email ?? "Sin reclamar"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl border border-line bg-slate-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slateText">Link público</p>
+                    <p className="mt-1 truncate font-mono text-xs text-ink">{publicUrl}</p>
+                  </div>
+
+                  <div className="mt-5 grid gap-2">
+                    <a
+                      href={publicUrl}
+                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brandHover"
+                    >
+                      <ExternalLink size={17} />
+                      Ver mi placa
+                    </a>
+                    <Link
+                      href={`/admin/qr-codes/${qr.code}/edit`}
+                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+                    >
+                      <Pencil size={17} />
+                      Editar información
+                    </Link>
+                    <a
+                      href={adminSupportUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-slateText transition hover:bg-emerald-50 hover:text-emerald-700"
+                    >
+                      <MessageCircle size={17} />
+                      Soporte por WhatsApp
+                    </a>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </section>
+
+        <div className="mt-4 hidden overflow-hidden rounded-2xl border border-line bg-white shadow-sm md:block">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-line text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slateText">
@@ -230,6 +316,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         />
       </div>
     </main>
+  );
+}
+
+function AdminMetric({
+  label,
+  value,
+  helper,
+  className = ""
+}: {
+  label: string;
+  value: string | number;
+  helper: string;
+  className?: string;
+}) {
+  return (
+    <div className={`rounded-2xl border border-line bg-white p-4 shadow-sm ${className}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slateText">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-ink">{value}</p>
+      <p className="mt-1 text-xs text-slateText">{helper}</p>
+    </div>
   );
 }
 
