@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
+import { extractPlaceId } from "@/components/DestinationUrlEditor";
 
 type FeedbackItem = {
   rating: number;
@@ -27,6 +27,7 @@ export function BoostModule({
   const [showAllComments, setShowAllComments] = useState(false);
   const [isPending, startTransition] = useTransition();
   const visibleFeedback = showAllComments ? feedbackItems : feedbackItems.slice(0, 1);
+  const placeId = extractPlaceId(initialDestinationUrl ?? "");
 
   function updateBoost(nextEnabled: boolean) {
     setMessage(null);
@@ -105,10 +106,10 @@ export function BoostModule({
         >
           <div className="overflow-hidden">
             <div className="border-t border-line/80 pt-5">
-              <DestinationUrlEditor
-                code={code}
-                initialDestinationUrl={initialDestinationUrl}
-              />
+              <h4 className="text-sm font-semibold text-ink">Place ID de Google</h4>
+              <p className="mt-1 truncate text-xs text-slateText">
+                {placeId || "Aún no hay Place ID configurado."}
+              </p>
             </div>
 
             <div className="mt-5 border-t border-line/80 pt-5">

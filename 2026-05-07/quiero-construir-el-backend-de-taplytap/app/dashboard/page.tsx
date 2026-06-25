@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BoostModule } from "@/components/BoostModule";
+import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -166,6 +167,10 @@ export default async function DashboardPage() {
                   >
                     Probar placa
                   </Link>
+                  <DestinationUrlEditor
+                    code={plate.code}
+                    initialDestinationUrl={plate.destination_url}
+                  />
                   <a
                     href="https://taplytap.io"
                     className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover"

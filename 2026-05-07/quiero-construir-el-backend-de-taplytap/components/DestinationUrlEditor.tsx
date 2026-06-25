@@ -14,26 +14,22 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
   const [isEditing, setIsEditing] = useState(false);
   const [placeId, setPlaceId] = useState(initialPlaceId);
   const [draftPlaceId, setDraftPlaceId] = useState(initialPlaceId);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function startEditing() {
     setDraftPlaceId(placeId);
-    setMessage(null);
     setError(null);
     setIsEditing(true);
   }
 
   function cancelEditing() {
     setDraftPlaceId(placeId);
-    setMessage(null);
     setError(null);
     setIsEditing(false);
   }
 
   function savePlaceId() {
-    setMessage(null);
     setError(null);
 
     startTransition(async () => {
@@ -56,7 +52,6 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
         setPlaceId(savedPlaceId);
         setDraftPlaceId(savedPlaceId);
         setIsEditing(false);
-        setMessage("Place ID actualizado correctamente.");
         router.refresh();
       } catch (saveError) {
         setError(saveError instanceof Error ? saveError.message : "No pudimos actualizar el Place ID.");
@@ -65,67 +60,63 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
   }
 
   return (
-    <section>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-ink">Place ID de Google</h3>
-          <p className="mt-1 truncate text-xs text-slateText">
-            {placeId || "Aún no hay Place ID configurado."}
-          </p>
-        </div>
-        {!isEditing ? (
-          <button
-            type="button"
-            onClick={startEditing}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-brandBorder bg-white px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brandSoft"
-          >
-            Cambiar Place ID
-          </button>
-        ) : null}
-      </div>
+    <>
+      <button
+        type="button"
+        onClick={startEditing}
+        className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+      >
+        Cambiar Place ID
+      </button>
 
       {isEditing ? (
-        <div className="mt-4 grid gap-3">
-          <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slateText">
-              Nuevo Place ID
-            </span>
-            <input
-              value={draftPlaceId}
-              onChange={(event) => setDraftPlaceId(event.target.value)}
-              className="rounded-xl border border-line bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
-              placeholder="ChIJ..."
-              disabled={isPending}
-            />
-          </label>
-          {error ? <p className="text-sm text-error">{error}</p> : null}
-          <div className="grid gap-2 sm:flex sm:justify-end">
-            <button
-              type="button"
-              onClick={cancelEditing}
-              disabled={isPending}
-              className="min-h-11 rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={savePlaceId}
-              disabled={isPending}
-              className="min-h-11 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brandHover disabled:cursor-wait disabled:opacity-70"
-            >
-              {isPending ? "Guardando..." : "Guardar"}
-            </button>
+        <div className="fixed inset-0 z-50 flex items-end bg-ink/35 px-4 py-5 sm:items-center sm:justify-center">
+          <div className="w-full rounded-2xl border border-line bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:max-w-md">
+            <div>
+              <p className="text-sm font-semibold text-ink">Cambiar Place ID</p>
+              <p className="mt-1 text-sm leading-6 text-slateText">
+                Actualiza el Place ID que se usa para enviar clientes a tu link de reseñas.
+              </p>
+            </div>
+            <label className="mt-4 grid gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slateText">
+                Nuevo Place ID
+              </span>
+              <input
+                value={draftPlaceId}
+                onChange={(event) => setDraftPlaceId(event.target.value)}
+                className="rounded-xl border border-line bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
+                placeholder="ChIJ..."
+                disabled={isPending}
+              />
+            </label>
+            {error ? <p className="mt-3 text-sm text-error">{error}</p> : null}
+            <div className="mt-4 grid gap-2 sm:flex sm:justify-end">
+              <button
+                type="button"
+                onClick={cancelEditing}
+                disabled={isPending}
+                className="min-h-11 rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={savePlaceId}
+                disabled={isPending}
+                className="min-h-11 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brandHover disabled:cursor-wait disabled:opacity-70"
+              >
+                {isPending ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
-
-      {message ? <p className="mt-3 text-sm text-success">{message}</p> : null}
-    </section>
+    </>
   );
 }
 
-function extractPlaceId(value: string) {
+export function extractPlaceId(value: string) {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) return "";
