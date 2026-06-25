@@ -13,6 +13,7 @@ create table if not exists public.qr_codes (
   status public.qr_status not null default 'inactive',
   public_url text,
   destination_url text,
+  boost_enabled boolean not null default false,
   place_id text,
   business_name text,
   contact_name text,
@@ -39,6 +40,7 @@ create index if not exists qr_codes_owner_user_id_idx on public.qr_codes (owner_
 
 alter table public.qr_codes
   add column if not exists public_url text,
+  add column if not exists boost_enabled boolean not null default false,
   add column if not exists place_id text,
   add column if not exists owner_user_id uuid references auth.users(id),
   add column if not exists claimed_at timestamptz,
@@ -48,6 +50,7 @@ alter table public.qr_codes
 
 create index if not exists qr_codes_owner_user_id_idx on public.qr_codes (owner_user_id);
 create index if not exists qr_codes_owner_email_idx on public.qr_codes (owner_email);
+create index if not exists qr_codes_boost_enabled_idx on public.qr_codes (boost_enabled);
 
 create table if not exists public.scan_events (
   id uuid primary key default gen_random_uuid(),

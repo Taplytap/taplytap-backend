@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
+import { BoostRatingGate } from "@/components/BoostRatingGate";
 import { getSupportEmail } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { hashIp, isSafeDestinationUrl, isValidCode, normalizeCode } from "@/lib/security";
@@ -8,6 +9,8 @@ import type { QrStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const BOOST_TEST_CODE = "szeacqhj";
 
 type PageProps = {
   params: {
@@ -64,6 +67,15 @@ export default async function UserQrPage({ params }: PageProps) {
       <ScanState
         title="Destino no disponible"
         message="La placa está activa, pero su URL de destino no es válida."
+      />
+    );
+  }
+
+  if (code === BOOST_TEST_CODE && qrCode.boost_enabled) {
+    return (
+      <BoostRatingGate
+        businessName={qrCode.business_name}
+        destinationUrl={qrCode.destination_url}
       />
     );
   }

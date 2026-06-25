@@ -6,6 +6,7 @@ export type QrCode = {
   status: QrStatus;
   public_url: string | null;
   destination_url: string | null;
+  boost_enabled: boolean;
   place_id: string | null;
   business_name: string | null;
   contact_name: string | null;

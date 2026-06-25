@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { BoostToggle } from "@/components/BoostToggle";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -112,6 +113,10 @@ export default async function DashboardPage() {
                   <Metric label="Scans últimos 30 días" value={scanRecent.get(plate.id) ?? 0} />
                   <Metric label="WhatsApp" value={plate.whatsapp ?? "-"} />
                 </dl>
+
+                <div className="mt-5">
+                  <BoostToggle code={plate.code} initialEnabled={plate.boost_enabled} />
+                </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
                   {plate.destination_url ? (
