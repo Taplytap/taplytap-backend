@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createGoogleReviewUrl, normalizePlaceId } from "@/lib/qr-form";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isValidCode, normalizeCode } from "@/lib/security";
@@ -34,19 +35,20 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Solicitud inválida." }, { status: 400 });
   }
 
-  if (!isDestinationPayload(body)) {
-    return NextResponse.json({ error: "Ingresa un link válido." }, { status: 400 });
+  if (!isPlaceIdPayload(body)) {
+    return NextResponse.json({ error: "Ingresa un Place ID válido." }, { status: 400 });
   }
 
-  const destinationUrl = body.destination_url.trim();
+  const placeId = readDashboardPlaceId(body.place_id);
 
-  if (!isHttpUrl(destinationUrl)) {
+  if (!placeId) {
     return NextResponse.json(
-      { error: "El link debe empezar con http:// o https://." },
+      { error: "El Place ID no puede estar vacío." },
       { status: 400 }
     );
   }
 
+  const destinationUrl = createGoogleReviewUrl(placeId);
   const supabase = createSupabaseAdminClient();
   const { data: qrCode, error } = await supabase
     .from("qr_codes")
@@ -67,21 +69,25 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   return NextResponse.json({ ok: true, destination_url: qrCode.destination_url });
 }
 
-function isDestinationPayload(value: unknown): value is { destination_url: string } {
+function isPlaceIdPayload(value: unknown): value is { place_id: string } {
   return (
     typeof value === "object" &&
     value !== null &&
-    "destination_url" in value &&
-    typeof (value as { destination_url: unknown }).destination_url === "string" &&
-    (value as { destination_url: string }).destination_url.trim().length > 0
+    "place_id" in value &&
+    typeof (value as { place_id: unknown }).place_id === "string" &&
+    (value as { place_id: string }).place_id.trim().length > 0
   );
 }
 
-function isHttpUrl(value: string) {
+function readDashboardPlaceId(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "";
+
   try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    const url = new URL(trimmedValue);
+    return url.searchParams.get("placeid")?.replace(/\s/g, "") ?? "";
   } catch {
-    return false;
+    return normalizePlaceId(trimmedValue);
   }
 }

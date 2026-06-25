@@ -26,7 +26,7 @@ export function BoostRatingGate({ businessName, destinationUrl }: BoostRatingGat
         <section className="rounded-3xl border border-line bg-white p-6 text-center shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap</p>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink">
-            ¿Cómo fue tu experiencia?
+            ¿Nos regalas una calificación?
           </h1>
           <p className="mt-3 text-sm leading-6 text-slateText">
             {businessName

@@ -10,39 +10,41 @@ type DestinationUrlEditorProps = {
 
 export function DestinationUrlEditor({ code, initialDestinationUrl }: DestinationUrlEditorProps) {
   const router = useRouter();
+  const initialPlaceId = extractPlaceId(initialDestinationUrl ?? "");
   const [isEditing, setIsEditing] = useState(false);
-  const [destinationUrl, setDestinationUrl] = useState(initialDestinationUrl ?? "");
-  const [draftUrl, setDraftUrl] = useState(initialDestinationUrl ?? "");
+  const [placeId, setPlaceId] = useState(initialPlaceId);
+  const [draftPlaceId, setDraftPlaceId] = useState(initialPlaceId);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function startEditing() {
-    setDraftUrl(destinationUrl);
+    setDraftPlaceId(placeId);
     setMessage(null);
     setError(null);
     setIsEditing(true);
   }
 
   function cancelEditing() {
-    setDraftUrl(destinationUrl);
+    setDraftPlaceId(placeId);
     setMessage(null);
     setError(null);
     setIsEditing(false);
   }
 
-  function saveDestinationUrl() {
+  function savePlaceId() {
     setMessage(null);
     setError(null);
 
     startTransition(async () => {
       try {
+        const normalizedPlaceId = extractPlaceId(draftPlaceId);
         const response = await fetch(`/api/dashboard/qr-codes/${code}/destination`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ destination_url: draftUrl.trim() })
+          body: JSON.stringify({ place_id: normalizedPlaceId })
         });
         const payload = await response.json().catch(() => ({}));
 
@@ -50,13 +52,14 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
           throw new Error(payload.error ?? "No pudimos actualizar el link.");
         }
 
-        setDestinationUrl(payload.destination_url ?? "");
-        setDraftUrl(payload.destination_url ?? "");
+        const savedPlaceId = extractPlaceId(payload.destination_url ?? "");
+        setPlaceId(savedPlaceId);
+        setDraftPlaceId(savedPlaceId);
         setIsEditing(false);
-        setMessage("Link actualizado correctamente.");
+        setMessage("Place ID actualizado correctamente.");
         router.refresh();
       } catch (saveError) {
-        setError(saveError instanceof Error ? saveError.message : "No pudimos actualizar el link.");
+        setError(saveError instanceof Error ? saveError.message : "No pudimos actualizar el Place ID.");
       }
     });
   }
@@ -65,9 +68,9 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
     <section className="rounded-xl border border-line bg-white px-4 py-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-ink">Link de reseña</h3>
+          <h3 className="text-sm font-semibold text-ink">Place ID de Google</h3>
           <p className="mt-1 truncate text-xs text-slateText">
-            {destinationUrl ? abbreviateUrl(destinationUrl) : "Aún no hay link configurado."}
+            {placeId || "Aún no hay Place ID configurado."}
           </p>
         </div>
         {!isEditing ? (
@@ -85,13 +88,13 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
         <div className="mt-4 grid gap-3">
           <label className="grid gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-slateText">
-              Nuevo link
+              Nuevo Place ID
             </span>
             <input
-              value={draftUrl}
-              onChange={(event) => setDraftUrl(event.target.value)}
+              value={draftPlaceId}
+              onChange={(event) => setDraftPlaceId(event.target.value)}
               className="rounded-xl border border-line bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
-              placeholder="https://search.google.com/local/writereview?placeid=..."
+              placeholder="ChIJ..."
               disabled={isPending}
             />
           </label>
@@ -107,7 +110,7 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
             </button>
             <button
               type="button"
-              onClick={saveDestinationUrl}
+              onClick={savePlaceId}
               disabled={isPending}
               className="min-h-11 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brandHover disabled:cursor-wait disabled:opacity-70"
             >
@@ -122,7 +125,27 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
   );
 }
 
-function abbreviateUrl(value: string) {
-  if (value.length <= 72) return value;
-  return `${value.slice(0, 42)}...${value.slice(-18)}`;
+function extractPlaceId(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "";
+
+  try {
+    const url = new URL(trimmedValue);
+    const placeId = url.searchParams.get("placeid");
+
+    if (placeId) {
+      return placeId.replace(/\s/g, "");
+    }
+  } catch {
+    // Plain Place IDs are expected. URLs are handled only when parsing succeeds.
+  }
+
+  const match = trimmedValue.match(/[?&]placeid=([^&\s]+)/i);
+
+  if (match?.[1]) {
+    return decodeURIComponent(match[1]).replace(/\s/g, "");
+  }
+
+  return trimmedValue.replace(/\s/g, "");
 }
