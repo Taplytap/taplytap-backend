@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BoostModule } from "@/components/BoostModule";
-import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
+import { DestinationUrlEditor, extractPlaceId } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -146,8 +146,12 @@ export default async function DashboardPage() {
                 <BoostModule
                   code={plate.code}
                   initialEnabled={plate.boost_enabled}
-                  initialDestinationUrl={plate.destination_url}
                   feedbackItems={feedbackByPlate.get(plate.id) ?? []}
+                />
+
+                <PlaceIdCard
+                  code={plate.code}
+                  destinationUrl={plate.destination_url}
                 />
 
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -167,16 +171,6 @@ export default async function DashboardPage() {
                   >
                     Probar placa
                   </Link>
-                  <DestinationUrlEditor
-                    code={plate.code}
-                    initialDestinationUrl={plate.destination_url}
-                  />
-                  <a
-                    href="https://taplytap.io"
-                    className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover"
-                  >
-                    Comprar otra placa
-                  </a>
                 </div>
               </article>
             ))}
@@ -185,6 +179,34 @@ export default async function DashboardPage() {
       </div>
       <SupportWhatsAppBubble />
     </main>
+  );
+}
+
+function PlaceIdCard({
+  code,
+  destinationUrl
+}: {
+  code: string;
+  destinationUrl: string | null;
+}) {
+  const placeId = extractPlaceId(destinationUrl ?? "");
+
+  return (
+    <section className="mt-4 rounded-2xl border border-line bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-ink">Place ID de Google</h3>
+          <p className="mt-1 truncate font-mono text-xs text-slateText">
+            {placeId || "Aún no hay Place ID configurado."}
+          </p>
+        </div>
+        <DestinationUrlEditor
+          code={code}
+          initialDestinationUrl={destinationUrl}
+          buttonLabel="Cambiar"
+        />
+      </div>
+    </section>
   );
 }
 

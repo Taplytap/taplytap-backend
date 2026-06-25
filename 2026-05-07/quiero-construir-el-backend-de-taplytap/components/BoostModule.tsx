@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { extractPlaceId } from "@/components/DestinationUrlEditor";
 
 type FeedbackItem = {
   rating: number;
@@ -12,14 +11,12 @@ type FeedbackItem = {
 type BoostModuleProps = {
   code: string;
   initialEnabled: boolean;
-  initialDestinationUrl: string | null;
   feedbackItems: FeedbackItem[];
 };
 
 export function BoostModule({
   code,
   initialEnabled,
-  initialDestinationUrl,
   feedbackItems
 }: BoostModuleProps) {
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -27,7 +24,6 @@ export function BoostModule({
   const [showAllComments, setShowAllComments] = useState(false);
   const [isPending, startTransition] = useTransition();
   const visibleFeedback = showAllComments ? feedbackItems : feedbackItems.slice(0, 1);
-  const placeId = extractPlaceId(initialDestinationUrl ?? "");
 
   function updateBoost(nextEnabled: boolean) {
     setMessage(null);
@@ -106,13 +102,6 @@ export function BoostModule({
         >
           <div className="overflow-hidden">
             <div className="border-t border-line/80 pt-5">
-              <h4 className="text-sm font-semibold text-ink">Place ID de Google</h4>
-              <p className="mt-1 truncate text-xs text-slateText">
-                {placeId || "Aún no hay Place ID configurado."}
-              </p>
-            </div>
-
-            <div className="mt-5 border-t border-line/80 pt-5">
               <div className="flex items-center justify-between gap-3">
                 <h4 className="text-sm font-semibold text-ink">Comentarios recientes</h4>
                 <span className="rounded-full bg-brandSoft px-2.5 py-1 text-xs font-semibold text-brand">

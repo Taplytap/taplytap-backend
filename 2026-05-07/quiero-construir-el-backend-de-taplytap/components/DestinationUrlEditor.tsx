@@ -6,9 +6,14 @@ import { useState, useTransition } from "react";
 type DestinationUrlEditorProps = {
   code: string;
   initialDestinationUrl: string | null;
+  buttonLabel?: string;
 };
 
-export function DestinationUrlEditor({ code, initialDestinationUrl }: DestinationUrlEditorProps) {
+export function DestinationUrlEditor({
+  code,
+  initialDestinationUrl,
+  buttonLabel = "Cambiar Place ID"
+}: DestinationUrlEditorProps) {
   const router = useRouter();
   const initialPlaceId = extractPlaceId(initialDestinationUrl ?? "");
   const [isEditing, setIsEditing] = useState(false);
@@ -66,7 +71,7 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
         onClick={startEditing}
         className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
       >
-        Cambiar Place ID
+        {buttonLabel}
       </button>
 
       {isEditing ? (
