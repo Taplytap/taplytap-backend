@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import { logServerError } from "@/lib/server-log";
 import type { Database } from "@/lib/types";
 import { assertServerEnv } from "@/lib/env";
 
@@ -13,7 +14,8 @@ type CookieToSet = {
 export async function updateSupabaseSession(request: NextRequest) {
   try {
     assertServerEnv();
-  } catch {
+  } catch (error) {
+    logServerError("middleware assertServerEnv", error);
     return NextResponse.next({
       request
     });
@@ -53,7 +55,8 @@ export async function updateSupabaseSession(request: NextRequest) {
 
   try {
     await supabase.auth.getUser();
-  } catch {
+  } catch (error) {
+    logServerError("middleware supabase.auth.getUser", error);
     return response;
   }
 

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { getSiteUrl } from "@/lib/env";
+import { logServerError } from "@/lib/server-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -40,6 +41,7 @@ export default function LoginPage({ searchParams }: PageProps) {
         authErrorMessage = error.message;
       }
     } catch (error) {
+      logServerError("/login action signInWithPassword", error);
       authErrorMessage = error instanceof Error ? error.message : "No se pudo contactar Supabase.";
     }
 
@@ -71,13 +73,30 @@ export default function LoginPage({ searchParams }: PageProps) {
       await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: callbackUrl.toString()
       });
-    } catch {
+    } catch (error) {
+      logServerError("/login action sendPasswordRecovery", error);
       // Keep the response intentionally neutral so we do not reveal whether an account exists.
     }
 
     redirect(buildLoginUrl({ reset: "sent" }));
   }
 
+  try {
+    return renderLoginPage({ searchParams, signInWithPassword, sendPasswordRecovery });
+  } catch (error) {
+    logServerError("/login render", error);
+    throw error;
+  }
+}
+
+function renderLoginPage({
+  searchParams,
+  signInWithPassword,
+  sendPasswordRecovery
+}: PageProps & {
+  signInWithPassword: (formData: FormData) => Promise<void>;
+  sendPasswordRecovery: (formData: FormData) => Promise<void>;
+}) {
   const errorMessage = getLoginErrorMessage(searchParams?.error, searchParams?.message);
 
   return (

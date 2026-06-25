@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BoostModule } from "@/components/BoostModule";
 import { DestinationUrlEditor, extractPlaceId } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
+import { logServerError } from "@/lib/server-log";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -14,6 +15,19 @@ type FeedbackItem = {
 };
 
 export default async function DashboardPage() {
+  try {
+    return await renderDashboardPage();
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    logServerError("/dashboard render", error);
+    throw error;
+  }
+}
+
+async function renderDashboardPage() {
   const authClient = createSupabaseServerClient();
   const {
     data: { user },
@@ -179,6 +193,16 @@ export default async function DashboardPage() {
       </div>
       <SupportWhatsAppBubble />
     </main>
+  );
+}
+
+function isNextRedirectError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    (error as { digest: string }).digest.startsWith("NEXT_REDIRECT")
   );
 }
 
