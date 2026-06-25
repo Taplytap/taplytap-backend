@@ -74,6 +74,7 @@ export default async function UserQrPage({ params }: PageProps) {
   if (code === BOOST_TEST_CODE && qrCode.boost_enabled) {
     return (
       <BoostRatingGate
+        code={code}
         businessName={qrCode.business_name}
         destinationUrl={qrCode.destination_url}
       />

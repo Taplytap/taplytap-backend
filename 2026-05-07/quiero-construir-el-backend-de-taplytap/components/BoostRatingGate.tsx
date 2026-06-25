@@ -3,20 +3,55 @@
 import { useState } from "react";
 
 type BoostRatingGateProps = {
+  code: string;
   businessName: string | null;
   destinationUrl: string;
 };
 
 const ratings = [1, 2, 3, 4, 5];
 
-export function BoostRatingGate({ businessName, destinationUrl }: BoostRatingGateProps) {
+export function BoostRatingGate({ code, businessName, destinationUrl }: BoostRatingGateProps) {
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "sent">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   function handleRating(rating: number) {
     setSelectedRating(rating);
 
     if (rating >= 4) {
       window.location.assign(destinationUrl);
+    }
+  }
+
+  async function submitFeedback() {
+    if (!selectedRating || selectedRating > 3) return;
+
+    setError(null);
+    setStatus("saving");
+
+    try {
+      const response = await fetch("/api/boost-feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          code,
+          rating: selectedRating,
+          message
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "No pudimos guardar tu comentario.");
+      }
+
+      setStatus("sent");
+    } catch (submitError) {
+      setStatus("idle");
+      setError(submitError instanceof Error ? submitError.message : "No pudimos guardar tu comentario.");
     }
   }
 
@@ -58,11 +93,34 @@ export function BoostRatingGate({ businessName, destinationUrl }: BoostRatingGat
 
           {selectedRating && selectedRating <= 3 ? (
             <div className="mt-7 rounded-2xl border border-brandBorder bg-brandSoft p-4 text-left">
-              <h2 className="text-base font-semibold text-ink">Gracias por contarnos.</h2>
-              <p className="mt-2 text-sm leading-6 text-slateText">
-                Tu comentario es importante. Por ahora esta prueba de Boost mantiene tu feedback privado
-                y ayuda al negocio a detectar oportunidades antes de pedir una reseña pública.
-              </p>
+              {status === "sent" ? (
+                <p className="text-base font-semibold text-ink">Gracias por tu comentario.</p>
+              ) : (
+                <div className="grid gap-3">
+                  <label className="grid gap-2">
+                    <span className="text-base font-semibold text-ink">
+                      Gracias por tu comentario. Déjanos aquí lo que pasó en tu experiencia.
+                    </span>
+                    <textarea
+                      value={message}
+                      onChange={(event) => setMessage(event.target.value)}
+                      className="min-h-28 rounded-xl border border-brandBorder bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
+                      placeholder="Escribe tu comentario..."
+                      maxLength={1200}
+                      disabled={status === "saving"}
+                    />
+                  </label>
+                  {error ? <p className="text-sm text-error">{error}</p> : null}
+                  <button
+                    type="button"
+                    onClick={submitFeedback}
+                    disabled={status === "saving" || !message.trim()}
+                    className="min-h-11 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {status === "saving" ? "Enviando..." : "Enviar comentario"}
+                  </button>
+                </div>
+              )}
             </div>
           ) : null}
 

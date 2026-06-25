@@ -69,6 +69,22 @@ create index if not exists scan_events_qr_code_id_idx on public.scan_events (qr_
 create index if not exists scan_events_code_idx on public.scan_events (code);
 create index if not exists scan_events_created_at_idx on public.scan_events (created_at desc);
 
+create table if not exists public.boost_feedback (
+  id uuid primary key default gen_random_uuid(),
+  qr_code_id uuid references public.qr_codes(id) on delete set null,
+  code text not null,
+  rating int not null check (rating between 1 and 3),
+  message text not null,
+  user_agent text,
+  ip_hash text,
+  created_at timestamptz not null default now(),
+  constraint boost_feedback_code_format check (code ~ '^[a-z0-9_-]{4,64}$')
+);
+
+create index if not exists boost_feedback_qr_code_id_idx on public.boost_feedback (qr_code_id);
+create index if not exists boost_feedback_code_idx on public.boost_feedback (code);
+create index if not exists boost_feedback_created_at_idx on public.boost_feedback (created_at desc);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -87,6 +103,7 @@ execute function public.set_updated_at();
 
 alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
+alter table public.boost_feedback enable row level security;
 
 drop policy if exists "Admins can read QR codes" on public.qr_codes;
 drop policy if exists "Admins can read scan events" on public.scan_events;
@@ -102,6 +119,14 @@ with check (false);
 drop policy if exists "Deny public scan writes" on public.scan_events;
 create policy "Deny public scan writes"
 on public.scan_events
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public boost feedback writes" on public.boost_feedback;
+create policy "Deny public boost feedback writes"
+on public.boost_feedback
 for all
 to anon, authenticated
 using (false)

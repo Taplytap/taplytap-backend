@@ -6,6 +6,13 @@ import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+type FeedbackItem = {
+  qr_code_id: string | null;
+  rating: number;
+  message: string;
+  created_at: string;
+};
+
 export default async function DashboardPage() {
   const authClient = createSupabaseServerClient();
   const {
@@ -55,8 +62,22 @@ export default async function DashboardPage() {
     throw new Error(scansError.message);
   }
 
+  const { data: feedback, error: feedbackError } = plateIds.length > 0
+    ? await supabase
+        .from("boost_feedback")
+        .select("qr_code_id,rating,message,created_at")
+        .in("qr_code_id", plateIds)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [], error: null };
+
+  if (feedbackError) {
+    throw new Error(feedbackError.message);
+  }
+
   const scanTotals = new Map<string, number>();
   const scanRecent = new Map<string, number>();
+  const feedbackByPlate = new Map<string, FeedbackItem[]>();
 
   for (const scan of scans ?? []) {
     if (!scan.qr_code_id) continue;
@@ -65,6 +86,13 @@ export default async function DashboardPage() {
     if (scan.created_at >= thirtyDaysAgoIso) {
       scanRecent.set(scan.qr_code_id, (scanRecent.get(scan.qr_code_id) ?? 0) + 1);
     }
+  }
+
+  for (const item of feedback ?? []) {
+    if (!item.qr_code_id) continue;
+    const currentFeedback = feedbackByPlate.get(item.qr_code_id) ?? [];
+    currentFeedback.push(item);
+    feedbackByPlate.set(item.qr_code_id, currentFeedback);
   }
 
   return (
@@ -126,6 +154,8 @@ export default async function DashboardPage() {
                   />
                 </div>
 
+                <FeedbackList items={feedbackByPlate.get(plate.id) ?? []} />
+
                 <div className="mt-5 flex flex-wrap gap-3">
                   {plate.destination_url ? (
                     <a
@@ -157,6 +187,44 @@ export default async function DashboardPage() {
       </div>
       <SupportWhatsAppBubble />
     </main>
+  );
+}
+
+function FeedbackList({
+  items
+}: {
+  items: Array<{
+    rating: number;
+    message: string;
+    created_at: string;
+  }>;
+}) {
+  return (
+    <section className="mt-4 rounded-xl border border-line bg-white px-4 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-ink">Comentarios Boost</h3>
+        <span className="rounded-full bg-brandSoft px-2.5 py-1 text-xs font-semibold text-brand">
+          {items.length}
+        </span>
+      </div>
+      {items.length === 0 ? (
+        <p className="mt-2 text-sm text-slateText">Aún no hay comentarios.</p>
+      ) : (
+        <div className="mt-3 grid gap-3">
+          {items.slice(0, 3).map((item) => (
+            <article key={`${item.created_at}-${item.rating}`} className="rounded-xl bg-slate-50 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-ink">{item.rating} estrellas</p>
+                <time className="text-xs text-slateText">
+                  {new Date(item.created_at).toLocaleDateString("es-MX")}
+                </time>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slateText">{item.message}</p>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

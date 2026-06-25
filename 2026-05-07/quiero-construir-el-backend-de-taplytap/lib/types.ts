@@ -32,6 +32,17 @@ export type ScanEvent = {
   created_at: string;
 };
 
+export type BoostFeedback = {
+  id: string;
+  qr_code_id: string | null;
+  code: string;
+  rating: number;
+  message: string;
+  user_agent: string | null;
+  ip_hash: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -54,6 +65,24 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "scan_events_qr_code_id_fkey";
+            columns: ["qr_code_id"];
+            isOneToOne: false;
+            referencedRelation: "qr_codes";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      boost_feedback: {
+        Row: BoostFeedback;
+        Insert: Partial<Omit<BoostFeedback, "id" | "created_at">> & {
+          code: string;
+          rating: number;
+          message: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "boost_feedback_qr_code_id_fkey";
             columns: ["qr_code_id"];
             isOneToOne: false;
             referencedRelation: "qr_codes";
