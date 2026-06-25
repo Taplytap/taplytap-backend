@@ -35,21 +35,25 @@ export function BoostRatingGate({ businessName, destinationUrl }: BoostRatingGat
           </p>
 
           <div className="mt-7 flex justify-center gap-2">
-            {ratings.map((rating) => (
-              <button
-                key={rating}
-                type="button"
-                onClick={() => handleRating(rating)}
-                className={`flex h-12 w-12 items-center justify-center rounded-2xl border text-2xl transition ${
-                  selectedRating === rating
-                    ? "border-brand bg-brandSoft text-brand"
-                    : "border-line bg-white text-slate-300 hover:border-brandBorder hover:bg-brandSoft hover:text-brand"
-                }`}
-                aria-label={`${rating} estrellas`}
-              >
-                ★
-              </button>
-            ))}
+            {ratings.map((rating) => {
+              const isSelected = selectedRating !== null && rating <= selectedRating;
+
+              return (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => handleRating(rating)}
+                  className={`flex h-12 w-12 items-center justify-center rounded-2xl border text-2xl transition ${
+                    isSelected
+                      ? "border-amber-300 bg-amber-50 text-amber-400"
+                      : "border-line bg-white text-slate-300 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-300"
+                  }`}
+                  aria-label={`${rating} estrellas`}
+                >
+                  ★
+                </button>
+              );
+            })}
           </div>
 
           {selectedRating && selectedRating <= 3 ? (
@@ -62,9 +66,6 @@ export function BoostRatingGate({ businessName, destinationUrl }: BoostRatingGat
             </div>
           ) : null}
 
-          <p className="mt-6 text-xs leading-5 text-slateText">
-            Si eliges 4 o 5 estrellas, te llevaremos a Google para dejar tu reseña.
-          </p>
         </section>
       </div>
     </main>

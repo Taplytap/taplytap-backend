@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BoostToggle } from "@/components/BoostToggle";
+import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -116,6 +117,13 @@ export default async function DashboardPage() {
 
                 <div className="mt-5">
                   <BoostToggle code={plate.code} initialEnabled={plate.boost_enabled} />
+                </div>
+
+                <div className="mt-4">
+                  <DestinationUrlEditor
+                    code={plate.code}
+                    initialDestinationUrl={plate.destination_url}
+                  />
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
