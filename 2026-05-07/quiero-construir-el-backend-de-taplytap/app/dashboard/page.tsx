@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BoostToggle } from "@/components/BoostToggle";
-import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
+import { BoostModule } from "@/components/BoostModule";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -143,18 +142,12 @@ export default async function DashboardPage() {
                   <Metric label="WhatsApp" value={plate.whatsapp ?? "-"} />
                 </dl>
 
-                <div className="mt-5">
-                  <BoostToggle code={plate.code} initialEnabled={plate.boost_enabled} />
-                </div>
-
-                <div className="mt-4">
-                  <DestinationUrlEditor
-                    code={plate.code}
-                    initialDestinationUrl={plate.destination_url}
-                  />
-                </div>
-
-                <FeedbackList items={feedbackByPlate.get(plate.id) ?? []} />
+                <BoostModule
+                  code={plate.code}
+                  initialEnabled={plate.boost_enabled}
+                  initialDestinationUrl={plate.destination_url}
+                  feedbackItems={feedbackByPlate.get(plate.id) ?? []}
+                />
 
                 <div className="mt-5 flex flex-wrap gap-3">
                   {plate.destination_url ? (
@@ -187,44 +180,6 @@ export default async function DashboardPage() {
       </div>
       <SupportWhatsAppBubble />
     </main>
-  );
-}
-
-function FeedbackList({
-  items
-}: {
-  items: Array<{
-    rating: number;
-    message: string;
-    created_at: string;
-  }>;
-}) {
-  return (
-    <section className="mt-4 rounded-xl border border-line bg-white px-4 py-4">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-ink">Comentarios Boost</h3>
-        <span className="rounded-full bg-brandSoft px-2.5 py-1 text-xs font-semibold text-brand">
-          {items.length}
-        </span>
-      </div>
-      {items.length === 0 ? (
-        <p className="mt-2 text-sm text-slateText">Aún no hay comentarios.</p>
-      ) : (
-        <div className="mt-3 grid gap-3">
-          {items.slice(0, 3).map((item) => (
-            <article key={`${item.created_at}-${item.rating}`} className="rounded-xl bg-slate-50 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-ink">{item.rating} estrellas</p>
-                <time className="text-xs text-slateText">
-                  {new Date(item.created_at).toLocaleDateString("es-MX")}
-                </time>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-slateText">{item.message}</p>
-            </article>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 

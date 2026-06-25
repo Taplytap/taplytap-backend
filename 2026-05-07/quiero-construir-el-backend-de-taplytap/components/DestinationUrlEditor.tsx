@@ -65,7 +65,7 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
   }
 
   return (
-    <section className="rounded-xl border border-line bg-white px-4 py-4">
+    <section>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">Place ID de Google</h3>
@@ -77,9 +77,9 @@ export function DestinationUrlEditor({ code, initialDestinationUrl }: Destinatio
           <button
             type="button"
             onClick={startEditing}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-brandBorder bg-white px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brandSoft"
           >
-            Cambiar link
+            Cambiar Place ID
           </button>
         ) : null}
       </div>
