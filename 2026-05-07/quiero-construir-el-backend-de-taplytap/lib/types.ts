@@ -1,4 +1,5 @@
 export type QrStatus = "active" | "inactive" | "blocked";
+export type BoostSubscriptionStatus = "inactive" | "active" | "canceled" | "past_due";
 
 export type QrCode = {
   id: string;
@@ -41,6 +42,14 @@ export type BoostFeedback = {
   user_agent: string | null;
   ip_hash: string | null;
   created_at: string;
+};
+
+export type BoostSubscription = {
+  id: string;
+  user_id: string;
+  status: BoostSubscriptionStatus;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Database = {
@@ -86,6 +95,23 @@ export type Database = {
             columns: ["qr_code_id"];
             isOneToOne: false;
             referencedRelation: "qr_codes";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      boost_subscriptions: {
+        Row: BoostSubscription;
+        Insert: Partial<Omit<BoostSubscription, "id" | "created_at" | "updated_at">> & {
+          user_id: string;
+          status?: BoostSubscriptionStatus;
+        };
+        Update: Partial<Omit<BoostSubscription, "id" | "created_at" | "updated_at">>;
+        Relationships: [
+          {
+            foreignKeyName: "boost_subscriptions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           }
         ];

@@ -39,6 +39,26 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const supabase = createSupabaseAdminClient();
+
+  if (body.boost_enabled) {
+    const { data: boostSubscription, error: boostSubscriptionError } = await supabase
+      .from("boost_subscriptions")
+      .select("status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (boostSubscriptionError) {
+      return NextResponse.json({ error: boostSubscriptionError.message }, { status: 500 });
+    }
+
+    if (boostSubscription?.status !== "active") {
+      return NextResponse.json(
+        { error: "Necesitas una licencia activa de TaplyTap Boost para activar esta función." },
+        { status: 403 }
+      );
+    }
+  }
+
   const { data: qrCode, error } = await supabase
     .from("qr_codes")
     .update({ boost_enabled: body.boost_enabled })

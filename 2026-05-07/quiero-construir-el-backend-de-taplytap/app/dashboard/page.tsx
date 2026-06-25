@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { BoostLockedCard } from "@/components/BoostLockedCard";
 import { BoostModule } from "@/components/BoostModule";
 import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
@@ -13,6 +14,8 @@ type FeedbackItem = {
   message: string;
   created_at: string;
 };
+
+const boostCheckoutUrl = process.env.NEXT_PUBLIC_BOOST_CHECKOUT_URL;
 
 export default async function DashboardPage() {
   try {
@@ -60,6 +63,17 @@ async function renderDashboardPage() {
     throw new Error(platesError.message);
   }
 
+  const { data: boostSubscription, error: boostSubscriptionError } = await supabase
+    .from("boost_subscriptions")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (boostSubscriptionError) {
+    throw new Error(boostSubscriptionError.message);
+  }
+
+  const hasActiveBoostLicense = boostSubscription?.status === "active";
   const plateIds = (plates ?? []).map((plate) => plate.id);
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -157,11 +171,15 @@ async function renderDashboardPage() {
                   <Metric label="WhatsApp" value={plate.whatsapp ?? "-"} />
                 </dl>
 
-                <BoostModule
-                  code={plate.code}
-                  initialEnabled={plate.boost_enabled}
-                  feedbackItems={feedbackByPlate.get(plate.id) ?? []}
-                />
+                {hasActiveBoostLicense ? (
+                  <BoostModule
+                    code={plate.code}
+                    initialEnabled={plate.boost_enabled}
+                    feedbackItems={feedbackByPlate.get(plate.id) ?? []}
+                  />
+                ) : (
+                  <BoostLockedCard checkoutUrl={boostCheckoutUrl} />
+                )}
 
                 <PlaceIdCard
                   code={plate.code}

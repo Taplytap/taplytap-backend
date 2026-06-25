@@ -85,6 +85,19 @@ create index if not exists boost_feedback_qr_code_id_idx on public.boost_feedbac
 create index if not exists boost_feedback_code_idx on public.boost_feedback (code);
 create index if not exists boost_feedback_created_at_idx on public.boost_feedback (created_at desc);
 
+create table if not exists public.boost_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'inactive',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint boost_subscriptions_status_check check (status in ('inactive', 'active', 'canceled', 'past_due')),
+  constraint boost_subscriptions_user_id_key unique (user_id)
+);
+
+create index if not exists boost_subscriptions_user_id_idx on public.boost_subscriptions (user_id);
+create index if not exists boost_subscriptions_status_idx on public.boost_subscriptions (status);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -101,9 +114,16 @@ before update on public.qr_codes
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_boost_subscriptions_updated_at on public.boost_subscriptions;
+create trigger set_boost_subscriptions_updated_at
+before update on public.boost_subscriptions
+for each row
+execute function public.set_updated_at();
+
 alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
 alter table public.boost_feedback enable row level security;
+alter table public.boost_subscriptions enable row level security;
 
 drop policy if exists "Admins can read QR codes" on public.qr_codes;
 drop policy if exists "Admins can read scan events" on public.scan_events;
@@ -127,6 +147,14 @@ with check (false);
 drop policy if exists "Deny public boost feedback writes" on public.boost_feedback;
 create policy "Deny public boost feedback writes"
 on public.boost_feedback
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public boost subscription access" on public.boost_subscriptions;
+create policy "Deny public boost subscription access"
+on public.boost_subscriptions
 for all
 to anon, authenticated
 using (false)
