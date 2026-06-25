@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BoostModule } from "@/components/BoostModule";
-import { DestinationUrlEditor, extractPlaceId } from "@/components/DestinationUrlEditor";
+import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { logServerError } from "@/lib/server-log";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -232,6 +232,31 @@ function PlaceIdCard({
       </div>
     </section>
   );
+}
+
+function extractPlaceId(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "";
+
+  try {
+    const url = new URL(trimmedValue);
+    const placeId = url.searchParams.get("placeid");
+
+    if (placeId) {
+      return placeId.replace(/\s/g, "");
+    }
+  } catch {
+    // Plain Place IDs are expected. URLs are handled only when parsing succeeds.
+  }
+
+  const match = trimmedValue.match(/[?&]placeid=([^&\s]+)/i);
+
+  if (match?.[1]) {
+    return decodeURIComponent(match[1]).replace(/\s/g, "");
+  }
+
+  return trimmedValue.replace(/\s/g, "");
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {
