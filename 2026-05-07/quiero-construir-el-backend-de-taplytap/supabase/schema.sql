@@ -89,14 +89,50 @@ create table if not exists public.boost_subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   status text not null default 'inactive',
+  source text,
+  email text,
+  shopify_customer_id text,
+  shopify_order_id text,
+  shopify_subscription_id text,
+  current_period_end timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint boost_subscriptions_status_check check (status in ('inactive', 'active', 'canceled', 'past_due')),
   constraint boost_subscriptions_user_id_key unique (user_id)
 );
 
+alter table public.boost_subscriptions
+  add column if not exists source text,
+  add column if not exists email text,
+  add column if not exists shopify_customer_id text,
+  add column if not exists shopify_order_id text,
+  add column if not exists shopify_subscription_id text,
+  add column if not exists current_period_end timestamptz;
+
 create index if not exists boost_subscriptions_user_id_idx on public.boost_subscriptions (user_id);
 create index if not exists boost_subscriptions_status_idx on public.boost_subscriptions (status);
+create index if not exists boost_subscriptions_email_idx on public.boost_subscriptions (email);
+
+create table if not exists public.shopify_webhook_events (
+  id text primary key,
+  topic text not null,
+  shop_domain text,
+  processed_at timestamptz not null default now()
+);
+
+create table if not exists public.boost_subscription_pending (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  status text not null default 'active',
+  shopify_customer_id text,
+  shopify_order_id text,
+  payload jsonb,
+  created_at timestamptz not null default now(),
+  constraint boost_subscription_pending_status_check check (status in ('inactive', 'active', 'canceled', 'past_due'))
+);
+
+create index if not exists boost_subscription_pending_email_idx on public.boost_subscription_pending (email);
+create index if not exists boost_subscription_pending_shopify_order_id_idx on public.boost_subscription_pending (shopify_order_id);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -124,6 +160,8 @@ alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
 alter table public.boost_feedback enable row level security;
 alter table public.boost_subscriptions enable row level security;
+alter table public.shopify_webhook_events enable row level security;
+alter table public.boost_subscription_pending enable row level security;
 
 drop policy if exists "Admins can read QR codes" on public.qr_codes;
 drop policy if exists "Admins can read scan events" on public.scan_events;
@@ -155,6 +193,22 @@ with check (false);
 drop policy if exists "Deny public boost subscription access" on public.boost_subscriptions;
 create policy "Deny public boost subscription access"
 on public.boost_subscriptions
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public shopify webhook events access" on public.shopify_webhook_events;
+create policy "Deny public shopify webhook events access"
+on public.shopify_webhook_events
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public boost subscription pending access" on public.boost_subscription_pending;
+create policy "Deny public boost subscription pending access"
+on public.boost_subscription_pending
 for all
 to anon, authenticated
 using (false)

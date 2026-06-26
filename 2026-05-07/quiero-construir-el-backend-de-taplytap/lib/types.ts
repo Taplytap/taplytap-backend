@@ -1,5 +1,6 @@
 export type QrStatus = "active" | "inactive" | "blocked";
 export type BoostSubscriptionStatus = "inactive" | "active" | "canceled" | "past_due";
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type QrCode = {
   id: string;
@@ -48,8 +49,31 @@ export type BoostSubscription = {
   id: string;
   user_id: string;
   status: BoostSubscriptionStatus;
+  source: string | null;
+  email: string | null;
+  shopify_customer_id: string | null;
+  shopify_order_id: string | null;
+  shopify_subscription_id: string | null;
+  current_period_end: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ShopifyWebhookEvent = {
+  id: string;
+  topic: string;
+  shop_domain: string | null;
+  processed_at: string;
+};
+
+export type BoostSubscriptionPending = {
+  id: string;
+  email: string;
+  status: BoostSubscriptionStatus;
+  shopify_customer_id: string | null;
+  shopify_order_id: string | null;
+  payload: Json | null;
+  created_at: string;
 };
 
 export type Database = {
@@ -115,6 +139,26 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      shopify_webhook_events: {
+        Row: ShopifyWebhookEvent;
+        Insert: {
+          id: string;
+          topic: string;
+          shop_domain?: string | null;
+          processed_at?: string;
+        };
+        Update: Partial<Omit<ShopifyWebhookEvent, "id">>;
+        Relationships: [];
+      };
+      boost_subscription_pending: {
+        Row: BoostSubscriptionPending;
+        Insert: Partial<Omit<BoostSubscriptionPending, "id" | "created_at">> & {
+          email: string;
+          status?: BoostSubscriptionStatus;
+        };
+        Update: Partial<Omit<BoostSubscriptionPending, "id" | "created_at">>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
