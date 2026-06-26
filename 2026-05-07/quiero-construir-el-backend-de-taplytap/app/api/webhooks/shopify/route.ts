@@ -35,11 +35,23 @@ export async function POST(request: NextRequest) {
   const webhookId = request.headers.get("x-shopify-webhook-id");
   const shopDomain = request.headers.get("x-shopify-shop-domain");
 
+  logShopifyWebhookStep("received", {
+    topic,
+    webhookId: webhookId ?? "missing",
+    shopDomain: shopDomain ?? "missing",
+    bodyBytes: rawBody.length
+  });
+
   if (!isValidShopifyHmac(rawBody, request.headers.get("x-shopify-hmac-sha256"))) {
+    logShopifyWebhookStep("return_invalid_hmac", {
+      topic,
+      webhookId: webhookId ?? "missing"
+    });
     return NextResponse.json({ error: "Invalid Shopify webhook signature." }, { status: 401 });
   }
 
   if (!webhookId) {
+    logShopifyWebhookStep("return_missing_webhook_id", { topic });
     return NextResponse.json({ error: "Missing Shopify webhook id." }, { status: 400 });
   }
 
@@ -52,14 +64,27 @@ export async function POST(request: NextRequest) {
 
   if (eventError) {
     if (eventError.code === "23505") {
+      logShopifyWebhookStep("return_duplicate_webhook", {
+        topic,
+        webhookId
+      });
       return NextResponse.json({ ok: true, duplicate: true });
     }
 
+    logShopifyWebhookStep("return_idempotency_insert_failed", {
+      topic,
+      webhookId,
+      error: eventError.message
+    });
     logServerError("/api/webhooks/shopify idempotency insert", eventError);
     return NextResponse.json({ error: eventError.message }, { status: 500 });
   }
 
   if (topic !== "orders/paid") {
+    logShopifyWebhookStep("return_ignored_topic", {
+      topic,
+      webhookId
+    });
     return NextResponse.json({ ok: true, ignored: true });
   }
 
@@ -68,29 +93,95 @@ export async function POST(request: NextRequest) {
   try {
     payload = JSON.parse(rawBody) as ShopifyOrderPayload;
   } catch {
+    logShopifyWebhookStep("return_invalid_json", {
+      topic,
+      webhookId
+    });
     return NextResponse.json({ error: "Invalid Shopify payload." }, { status: 400 });
   }
 
   try {
-    if (!orderIncludesBoost(payload)) {
+    logShopifyWebhookStep("order_payload_summary", {
+      webhookId,
+      orderId: toNullableString(payload.id) ?? "missing",
+      customerId: toNullableString(payload.customer?.id) ?? "missing",
+      lineItems: readLineItemIds(payload)
+    });
+
+    const includesBoost = orderIncludesBoost(payload);
+    logShopifyWebhookStep("boost_detection", {
+      webhookId,
+      detected: includesBoost,
+      configuredProductId: process.env.SHOPIFY_BOOST_PRODUCT_ID?.trim() ? "configured" : "missing",
+      configuredVariantId: process.env.SHOPIFY_BOOST_VARIANT_ID?.trim() ? "configured" : "missing"
+    });
+
+    if (!includesBoost) {
+      logShopifyWebhookStep("return_ignored_non_boost_order", {
+        webhookId,
+        orderId: toNullableString(payload.id) ?? "missing"
+      });
       return NextResponse.json({ ok: true, ignored: true });
     }
 
     const email = readShopifyEmail(payload);
+    logShopifyWebhookStep("email_detected", {
+      webhookId,
+      email: email ?? "missing"
+    });
 
     if (!email) {
+      logShopifyWebhookStep("saving_pending_missing_email", {
+        webhookId,
+        orderId: toNullableString(payload.id) ?? "missing"
+      });
       await savePendingSubscription(supabase, payload, null);
+      logShopifyWebhookStep("return_pending_missing_email", {
+        webhookId,
+        orderId: toNullableString(payload.id) ?? "missing"
+      });
       return NextResponse.json({ ok: true, pending: true, reason: "missing_email" });
     }
 
     const userId = await findOwnerUserIdByEmail(supabase, email);
+    logShopifyWebhookStep("owner_lookup_result", {
+      webhookId,
+      email,
+      foundQrCodeOwner: Boolean(userId),
+      ownerUserId: userId ?? "missing"
+    });
 
     if (!userId) {
+      logShopifyWebhookStep("saving_pending_user_not_found", {
+        webhookId,
+        email,
+        orderId: toNullableString(payload.id) ?? "missing"
+      });
       await savePendingSubscription(supabase, payload, email);
+      logShopifyWebhookStep("return_pending_user_not_found", {
+        webhookId,
+        email,
+        orderId: toNullableString(payload.id) ?? "missing"
+      });
       return NextResponse.json({ ok: true, pending: true, reason: "user_not_found" });
     }
 
-    const { error } = await supabase.from("boost_subscriptions").upsert(
+    const existingSubscription = await findBoostSubscriptionByUserId(supabase, userId);
+    logShopifyWebhookStep("existing_subscription_lookup", {
+      webhookId,
+      userId,
+      found: Boolean(existingSubscription),
+      status: existingSubscription?.status ?? "missing"
+    });
+
+    logShopifyWebhookStep("upsert_attempt", {
+      webhookId,
+      userId,
+      email,
+      orderId: toNullableString(payload.id) ?? "missing"
+    });
+
+    const { data: upsertedSubscription, error } = await supabase.from("boost_subscriptions").upsert(
       {
         user_id: userId,
         status: "active",
@@ -100,16 +191,35 @@ export async function POST(request: NextRequest) {
         shopify_order_id: toNullableString(payload.id)
       },
       { onConflict: "user_id" }
-    );
+    ).select("user_id,status,source,email,shopify_order_id");
 
     if (error) {
+      logShopifyWebhookStep("upsert_failed", {
+        webhookId,
+        userId,
+        error: error.message
+      });
       throw error;
     }
+
+    logShopifyWebhookStep("upsert_succeeded", {
+      webhookId,
+      userId,
+      rows: upsertedSubscription?.length ?? 0,
+      status: upsertedSubscription?.[0]?.status ?? "missing"
+    });
   } catch (error) {
+    logShopifyWebhookStep("return_processing_error", {
+      webhookId,
+      message: error instanceof Error ? error.message : String(error)
+    });
     logServerError("/api/webhooks/shopify process orders/paid", error);
     return NextResponse.json({ error: "Could not process Shopify webhook." }, { status: 500 });
   }
 
+  logShopifyWebhookStep("return_activated", {
+    webhookId
+  });
   return NextResponse.json({ ok: true, activated: true });
 }
 
@@ -144,6 +254,13 @@ function orderIncludesBoost(payload: ShopifyOrderPayload) {
       (boostVariantId ? variantId === boostVariantId : false)
     );
   });
+}
+
+function readLineItemIds(payload: ShopifyOrderPayload) {
+  return (payload.line_items ?? []).map((item) => ({
+    product_id: toNullableString(item.product_id) ?? "missing",
+    variant_id: toNullableString(item.variant_id) ?? "missing"
+  }));
 }
 
 function readShopifyEmail(payload: ShopifyOrderPayload) {
@@ -190,6 +307,23 @@ async function findOwnerUserIdByEmail(
   return data?.[0]?.owner_user_id ?? null;
 }
 
+async function findBoostSubscriptionByUserId(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  userId: string
+) {
+  const { data, error } = await supabase
+    .from("boost_subscriptions")
+    .select("user_id,status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 async function savePendingSubscription(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   payload: ShopifyOrderPayload,
@@ -212,4 +346,12 @@ async function savePendingSubscription(
 function toNullableString(value: number | string | null | undefined) {
   if (value === null || value === undefined) return null;
   return String(value);
+}
+
+function logShopifyWebhookStep(step: string, details: Record<string, unknown>) {
+  console.info("[shopify_webhook]", {
+    step,
+    timestamp: new Date().toISOString(),
+    ...details
+  });
 }
