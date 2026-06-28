@@ -15,8 +15,6 @@ type FeedbackItem = {
   created_at: string;
 };
 
-const boostCheckoutUrl = process.env.NEXT_PUBLIC_BOOST_CHECKOUT_URL;
-
 export default async function DashboardPage() {
   try {
     return await renderDashboardPage();
@@ -178,7 +176,7 @@ async function renderDashboardPage() {
                     feedbackItems={feedbackByPlate.get(plate.id) ?? []}
                   />
                 ) : (
-                  <BoostLockedCard checkoutUrl={boostCheckoutUrl} />
+                  <BoostLockedCard />
                 )}
 
                 <PlaceIdCard
