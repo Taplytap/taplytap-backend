@@ -54,6 +54,8 @@ export type BoostSubscription = {
   shopify_customer_id: string | null;
   shopify_order_id: string | null;
   shopify_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   current_period_end: string | null;
   created_at: string;
   updated_at: string;
@@ -125,11 +127,11 @@ export type Database = {
       };
       boost_subscriptions: {
         Row: BoostSubscription;
-        Insert: Partial<Omit<BoostSubscription, "id" | "created_at" | "updated_at">> & {
+        Insert: Partial<Omit<BoostSubscription, "id" | "created_at">> & {
           user_id: string;
           status?: BoostSubscriptionStatus;
         };
-        Update: Partial<Omit<BoostSubscription, "id" | "created_at" | "updated_at">>;
+        Update: Partial<Omit<BoostSubscription, "id" | "created_at">>;
         Relationships: [
           {
             foreignKeyName: "boost_subscriptions_user_id_fkey";

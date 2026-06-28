@@ -94,6 +94,8 @@ create table if not exists public.boost_subscriptions (
   shopify_customer_id text,
   shopify_order_id text,
   shopify_subscription_id text,
+  stripe_customer_id text,
+  stripe_subscription_id text,
   current_period_end timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -107,11 +109,14 @@ alter table public.boost_subscriptions
   add column if not exists shopify_customer_id text,
   add column if not exists shopify_order_id text,
   add column if not exists shopify_subscription_id text,
+  add column if not exists stripe_customer_id text,
+  add column if not exists stripe_subscription_id text,
   add column if not exists current_period_end timestamptz;
 
 create index if not exists boost_subscriptions_user_id_idx on public.boost_subscriptions (user_id);
 create index if not exists boost_subscriptions_status_idx on public.boost_subscriptions (status);
 create index if not exists boost_subscriptions_email_idx on public.boost_subscriptions (email);
+create index if not exists boost_subscriptions_stripe_subscription_id_idx on public.boost_subscriptions (stripe_subscription_id);
 
 create table if not exists public.shopify_webhook_events (
   id text primary key,
