@@ -10,8 +10,6 @@ import type { QrStatus } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const BOOST_TEST_CODE = "szeacqhj";
-
 type PageProps = {
   params: {
     code: string;
@@ -71,7 +69,12 @@ export default async function UserQrPage({ params }: PageProps) {
     );
   }
 
-  if (code === BOOST_TEST_CODE && qrCode.boost_enabled) {
+  const shouldShowBoostGate = await canShowBoostGate({
+    ownerUserId: qrCode.owner_user_id,
+    boostEnabled: qrCode.boost_enabled
+  });
+
+  if (shouldShowBoostGate) {
     return (
       <BoostRatingGate
         code={code}
@@ -82,6 +85,36 @@ export default async function UserQrPage({ params }: PageProps) {
   }
 
   redirect(qrCode.destination_url);
+}
+
+async function canShowBoostGate({
+  ownerUserId,
+  boostEnabled
+}: {
+  ownerUserId: string | null;
+  boostEnabled: boolean;
+}) {
+  if (!boostEnabled || !ownerUserId) {
+    return false;
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("boost_subscriptions")
+      .select("status")
+      .eq("user_id", ownerUserId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (error) {
+      return false;
+    }
+
+    return data?.status === "active";
+  } catch {
+    return false;
+  }
 }
 
 async function recordScan({
