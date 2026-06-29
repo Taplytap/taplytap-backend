@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { LockKeyhole, Sparkles } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { Alert } from "@/components/ui/alert";
@@ -108,15 +108,12 @@ function renderLoginPage({
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#EEF6FF_0%,#F8FAFC_42%,#FFFFFF_100%)] px-5 py-8 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center">
-        <Card className="taply-fade-up rounded-[2rem] border-white/80 bg-white/90 p-5 shadow-[0_30px_90px_rgba(15,23,42,0.10)] backdrop-blur sm:p-7">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_18px_40px_rgba(0,109,255,0.28)]">
-            <Sparkles size={22} />
-          </div>
-          <p className="mt-6 text-center text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap</p>
-          <h1 className="mt-2 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        <Card className="taply-fade-up rounded-[2.25rem] border-white/80 bg-white/90 p-6 shadow-[0_34px_100px_rgba(15,23,42,0.10)] backdrop-blur sm:p-8">
+          <p className="text-center text-base font-bold tracking-tight text-brand">TaplyTap</p>
+          <h1 className="mt-8 text-center text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             Administra tus placas TaplyTap
           </h1>
-          <p className="mx-auto mt-3 max-w-sm text-center text-base leading-7 text-slateText">
+          <p className="mx-auto mt-4 max-w-sm text-center text-base leading-7 text-slateText">
             Activa, edita y mejora tus placas desde un solo lugar.
           </p>
 
@@ -126,7 +123,7 @@ function renderLoginPage({
             </Alert>
           ) : null}
 
-          <div className="mt-7">
+          <div className="mt-10">
             {searchParams?.sent ? (
               <Alert variant="success">
                 Revisa tu correo para continuar.
@@ -162,7 +159,7 @@ function renderLoginPage({
             )}
           </div>
 
-          <section className="mt-5 rounded-2xl border border-line bg-slate-50/70 p-4">
+          <section className="mt-6 rounded-[1.5rem] border border-line bg-slate-50/70 p-4">
             {searchParams?.reset === "sent" ? (
               <div className="grid gap-2 text-sm leading-6">
                 <p className="font-medium text-emerald-700">
