@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, Sparkles, Zap } from "lucide-react";
+import { PrivateFeedbackViewer } from "@/components/PrivateFeedbackViewer";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
@@ -38,6 +39,7 @@ export function CustomerBoostOverview({ feedbackCount }: CustomerBoostOverviewPr
               <span className="text-xs font-medium text-slateText">
                 {feedbackCount} comentarios privados
               </span>
+              <PrivateFeedbackViewer feedbackCount={feedbackCount} />
             </div>
           </div>
         </div>
