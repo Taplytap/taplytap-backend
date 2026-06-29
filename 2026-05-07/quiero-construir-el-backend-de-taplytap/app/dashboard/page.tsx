@@ -149,6 +149,7 @@ async function renderDashboardPage({ searchParams }: PageProps) {
 
   const businessName = plates?.find((plate) => plate.business_name)?.business_name ?? "tu negocio";
   const feedbackCount = feedback?.length ?? 0;
+  const allBoostEnabled = (plates ?? []).length > 0 && (plates ?? []).every((plate) => plate.boost_enabled);
   const carouselPlates: PlateCarouselItem[] = (plates ?? []).map((plate) => ({
     id: plate.id,
     code: plate.code,
@@ -176,7 +177,10 @@ async function renderDashboardPage({ searchParams }: PageProps) {
         </div>
 
         {hasActiveBoostLicense ? (
-          <CustomerBoostOverview feedbackCount={feedbackCount} />
+          <CustomerBoostOverview
+            feedbackCount={feedbackCount}
+            allBoostEnabled={allBoostEnabled}
+          />
         ) : (
           <BoostLockedCard />
         )}

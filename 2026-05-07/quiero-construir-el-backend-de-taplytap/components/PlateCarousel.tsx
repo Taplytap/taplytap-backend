@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type React from "react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3,
@@ -47,17 +47,42 @@ export function PlateCarousel({
   hasActiveBoostLicense
 }: PlateCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentPlate = plates[currentIndex];
+  const [localPlates, setLocalPlates] = useState(plates);
+
+  useEffect(() => {
+    setLocalPlates(plates);
+  }, [plates]);
+
+  useEffect(() => {
+    function handleGlobalBoostChange(event: Event) {
+      const detail = (event as CustomEvent<{ enabled?: boolean }>).detail;
+
+      if (typeof detail?.enabled !== "boolean") return;
+
+      setLocalPlates((currentPlates) =>
+        currentPlates.map((plate) => ({
+          ...plate,
+          boostEnabled: detail.enabled ?? plate.boostEnabled
+        }))
+      );
+    }
+
+    window.addEventListener("taplytap:boost-global-change", handleGlobalBoostChange);
+
+    return () => {
+      window.removeEventListener("taplytap:boost-global-change", handleGlobalBoostChange);
+    };
+  }, []);
 
   function goPrevious() {
     setCurrentIndex((index) => Math.max(0, index - 1));
   }
 
   function goNext() {
-    setCurrentIndex((index) => Math.min(plates.length - 1, index + 1));
+    setCurrentIndex((index) => Math.min(localPlates.length - 1, index + 1));
   }
 
-  if (plates.length === 0) {
+  if (localPlates.length === 0) {
     return (
       <Card className="taply-fade-up mt-8 overflow-hidden rounded-[2rem] p-6 sm:p-8">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brandSoft text-brand">
@@ -83,7 +108,7 @@ export function PlateCarousel({
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink">Tus placas</h2>
           <p className="mt-1 text-sm text-slateText">
-            {currentIndex + 1} de {plates.length}
+            {currentIndex + 1} de {localPlates.length}
           </p>
         </div>
         <div className="hidden gap-2 sm:flex">
@@ -101,7 +126,7 @@ export function PlateCarousel({
             type="button"
             size="sm"
             onClick={goNext}
-            disabled={currentIndex === plates.length - 1}
+            disabled={currentIndex === localPlates.length - 1}
             aria-label="Placa siguiente"
           >
             <ChevronRight size={17} />
@@ -115,13 +140,22 @@ export function PlateCarousel({
           animate={{ x: `-${currentIndex * 100}%` }}
           transition={{ type: "spring", stiffness: 260, damping: 30 }}
         >
-          {plates.map((plate, index) => (
+          {localPlates.map((plate, index) => (
             <div key={plate.id} className="w-full shrink-0 pr-0">
               <PlateCard
                 plate={plate}
                 index={index}
-                total={plates.length}
+                total={localPlates.length}
                 hasActiveBoostLicense={hasActiveBoostLicense}
+                onBoostChange={(boostEnabled) => {
+                  setLocalPlates((currentPlates) =>
+                    currentPlates.map((currentPlate) =>
+                      currentPlate.id === plate.id
+                        ? { ...currentPlate, boostEnabled }
+                        : currentPlate
+                    )
+                  );
+                }}
               />
             </div>
           ))}
@@ -129,7 +163,7 @@ export function PlateCarousel({
       </div>
 
       <div className="mt-5 flex items-center justify-center gap-2">
-        {plates.map((plate, index) => (
+        {localPlates.map((plate, index) => (
           <button
             key={plate.id}
             type="button"
@@ -157,7 +191,7 @@ export function PlateCarousel({
         <Button
           type="button"
           onClick={goNext}
-          disabled={currentIndex === plates.length - 1}
+          disabled={currentIndex === localPlates.length - 1}
           aria-label="Placa siguiente"
         >
           Siguiente
@@ -172,12 +206,14 @@ function PlateCard({
   plate,
   index,
   total,
-  hasActiveBoostLicense
+  hasActiveBoostLicense,
+  onBoostChange
 }: {
   plate: PlateCarouselItem;
   index: number;
   total: number;
   hasActiveBoostLicense: boolean;
+  onBoostChange: (boostEnabled: boolean) => void;
 }) {
   return (
     <Card className="overflow-hidden rounded-[2rem] border-white bg-white/95 shadow-[0_28px_90px_rgba(15,23,42,0.10)]">
@@ -205,6 +241,7 @@ function PlateCard({
           code={plate.code}
           initialEnabled={plate.boostEnabled}
           hasActiveBoostLicense={hasActiveBoostLicense}
+          onBoostChange={onBoostChange}
         />
         <InfoRow icon={<BarChart3 size={18} />} label="Scans totales" value={plate.scanTotal} />
         <InfoRow icon={<RadioTower size={18} />} label="Scans últimos 30 días" value={plate.scanRecent} />
@@ -246,14 +283,20 @@ function PlateCard({
 function BoostRow({
   code,
   initialEnabled,
-  hasActiveBoostLicense
+  hasActiveBoostLicense,
+  onBoostChange
 }: {
   code: string;
   initialEnabled: boolean;
   hasActiveBoostLicense: boolean;
+  onBoostChange: (boostEnabled: boolean) => void;
 }) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setEnabled(initialEnabled);
+  }, [initialEnabled]);
 
   function updateBoost(nextEnabled: boolean) {
     const previousEnabled = enabled;
@@ -276,6 +319,7 @@ function BoostRow({
         }
 
         setEnabled(Boolean(payload.boost_enabled));
+        onBoostChange(Boolean(payload.boost_enabled));
       } catch {
         setEnabled(previousEnabled);
       }
