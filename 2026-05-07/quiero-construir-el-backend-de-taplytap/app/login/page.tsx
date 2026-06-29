@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
+import { LockKeyhole, Sparkles } from "lucide-react";
+import { FormSubmitButton } from "@/components/FormSubmitButton";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
+import { Alert } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getSiteUrl } from "@/lib/env";
 import { logServerError } from "@/lib/server-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -100,88 +106,99 @@ function renderLoginPage({
   const errorMessage = getLoginErrorMessage(searchParams?.error, searchParams?.message);
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] px-5 py-10 sm:px-6">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md flex-col justify-center">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap</p>
-        <h1 className="text-4xl font-bold tracking-tight text-ink">Entrar a mi cuenta</h1>
-        <p className="mt-3 text-base leading-7 text-slateText">
-          Usa el correo y contraseña que creaste al activar tu placa.
-        </p>
-
-        {errorMessage ? (
-          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {errorMessage}
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#EEF6FF_0%,#F8FAFC_42%,#FFFFFF_100%)] px-5 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center">
+        <Card className="taply-fade-up rounded-[2rem] border-white/80 bg-white/90 p-5 shadow-[0_30px_90px_rgba(15,23,42,0.10)] backdrop-blur sm:p-7">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_18px_40px_rgba(0,109,255,0.28)]">
+            <Sparkles size={22} />
           </div>
-        ) : null}
+          <p className="mt-6 text-center text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap</p>
+          <h1 className="mt-2 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+            Administra tus placas TaplyTap
+          </h1>
+          <p className="mx-auto mt-3 max-w-sm text-center text-base leading-7 text-slateText">
+            Activa, edita y mejora tus placas desde un solo lugar.
+          </p>
 
-        <section className="mt-8 rounded-2xl border border-line bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-6">
-          {searchParams?.sent ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-              Revisa tu correo para continuar.
-            </div>
-          ) : (
-            <form action={signInWithPassword} className="grid gap-4">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-ink">Email</span>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  className="rounded-xl border border-line bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
-                  placeholder="tu@email.com"
-                />
-              </label>
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-ink">Contraseña</span>
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  className="rounded-xl border border-line bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
-                  placeholder="Tu contraseña"
-                />
-              </label>
-              <button className="rounded-xl bg-brand px-4 py-3.5 text-base font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.24)] transition hover:bg-brandHover">
-                Entrar
-              </button>
-            </form>
-          )}
-        </section>
+          {errorMessage ? (
+            <Alert variant="destructive" className="mt-6 bg-red-50/90">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-        <section className="mt-5 rounded-2xl border border-line bg-white p-4">
-          {searchParams?.reset === "sent" ? (
-            <div className="grid gap-2 text-sm leading-6">
-              <p className="text-emerald-700">
-                Te enviamos un enlace para restablecer tu contraseña si el correo existe.
-              </p>
-              <p className="text-slateText">Si no recibes el correo, escríbenos por WhatsApp.</p>
-            </div>
-          ) : (
-            <details className="group">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-brand">
-                ¿Olvidaste tu contraseña?
-              </summary>
-              <form action={sendPasswordRecovery} className="mt-4 grid gap-3">
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-ink">Correo electrónico</span>
-                  <input
-                    name="recovery_email"
+          <div className="mt-7">
+            {searchParams?.sent ? (
+              <Alert variant="success">
+                Revisa tu correo para continuar.
+              </Alert>
+            ) : (
+              <form action={signInWithPassword} className="grid gap-4">
+                <Label>
+                  Email
+                  <Input
+                    name="email"
                     type="email"
                     required
-                    className="rounded-xl border border-line bg-white px-3 py-3 text-base text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
                     placeholder="tu@email.com"
                   />
-                </label>
-                <button className="rounded-xl border border-brandBorder bg-brandSoft px-4 py-3 text-sm font-semibold text-brand transition hover:bg-white">
-                  Enviar enlace de recuperación
-                </button>
-                <p className="text-xs leading-5 text-slateText">
-                  Si no recibes el correo, escríbenos por WhatsApp.
-                </p>
+                </Label>
+                <Label>
+                  Contraseña
+                  <Input
+                    name="password"
+                    type="password"
+                    required
+                    placeholder="Tu contraseña"
+                  />
+                </Label>
+                <FormSubmitButton
+                  pendingText="Entrando..."
+                  className="min-h-12 rounded-2xl bg-brand px-4 py-3.5 text-base font-semibold text-white shadow-[0_16px_36px_rgba(0,109,255,0.26)] transition hover:-translate-y-0.5 hover:bg-brandHover hover:shadow-[0_22px_44px_rgba(0,109,255,0.30)] disabled:cursor-wait disabled:translate-y-0 disabled:bg-brand/70"
+                >
+                  <LockKeyhole size={18} />
+                  Entrar
+                </FormSubmitButton>
               </form>
-            </details>
-          )}
-        </section>
+            )}
+          </div>
+
+          <section className="mt-5 rounded-2xl border border-line bg-slate-50/70 p-4">
+            {searchParams?.reset === "sent" ? (
+              <div className="grid gap-2 text-sm leading-6">
+                <p className="font-medium text-emerald-700">
+                  Te enviamos un enlace para restablecer tu contraseña si el correo existe.
+                </p>
+                <p className="text-slateText">Si no recibes el correo, escríbenos por WhatsApp.</p>
+              </div>
+            ) : (
+              <details className="group">
+                <summary className="cursor-pointer list-none text-sm font-semibold text-brand transition hover:text-brandHover">
+                  ¿Olvidaste tu contraseña?
+                </summary>
+                <form action={sendPasswordRecovery} className="mt-4 grid gap-3">
+                  <Label>
+                    Correo electrónico
+                    <Input
+                      name="recovery_email"
+                      type="email"
+                      required
+                      placeholder="tu@email.com"
+                    />
+                  </Label>
+                  <FormSubmitButton
+                    pendingText="Enviando..."
+                    className="min-h-11 rounded-2xl border border-brandBorder bg-white px-4 py-3 text-sm font-semibold text-brand transition hover:border-brand hover:bg-brandSoft disabled:cursor-wait disabled:opacity-70"
+                  >
+                    Enviar enlace de recuperación
+                  </FormSubmitButton>
+                  <p className="text-xs leading-5 text-slateText">
+                    Si no recibes el correo, escríbenos por WhatsApp.
+                  </p>
+                </form>
+              </details>
+            )}
+          </section>
+        </Card>
 
         <SupportWhatsAppBubble />
       </div>

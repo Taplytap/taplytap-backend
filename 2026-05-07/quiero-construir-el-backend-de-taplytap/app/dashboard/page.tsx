@@ -4,6 +4,8 @@ import { BoostLockedCard } from "@/components/BoostLockedCard";
 import { BoostModule } from "@/components/BoostModule";
 import { DestinationUrlEditor } from "@/components/DestinationUrlEditor";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { logServerError } from "@/lib/server-log";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -121,46 +123,71 @@ async function renderDashboardPage() {
     feedbackByPlate.set(item.qr_code_id, currentFeedback);
   }
 
+  const totalPlates = plates?.length ?? 0;
+  const activePlates = (plates ?? []).filter((plate) => plate.status === "active").length;
+  const totalScans = Array.from(scanTotals.values()).reduce((total, count) => total + count, 0);
+
   return (
-    <main className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#EEF6FF_0%,#F8FAFC_36%,#FFFFFF_100%)] px-4 py-7 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <p className="text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap</p>
-        <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="taply-fade-up mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight text-ink">Mis placas</h1>
-            <p className="mt-2 text-base leading-7 text-slateText">
+            <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Mis placas</h1>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slateText">
               Consulta tus placas activas, su estado y los escaneos registrados.
             </p>
           </div>
           <a
             href="https://taplytap.io"
-            className="rounded-xl bg-brand px-5 py-3 text-center text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.24)] transition hover:bg-brandHover"
+            className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-brand px-5 py-3 text-center text-sm font-semibold text-white shadow-[0_16px_36px_rgba(0,109,255,0.24)] transition hover:-translate-y-0.5 hover:bg-brandHover hover:shadow-[0_22px_44px_rgba(0,109,255,0.28)]"
           >
             Comprar otra placa
           </a>
         </div>
 
+        <section className="taply-fade-up mt-7 grid gap-3 sm:grid-cols-3">
+          <Metric label="Placas" value={totalPlates} />
+          <Metric label="Activas" value={activePlates} />
+          <Metric label="Scans totales" value={totalScans} />
+        </section>
+
         {(plates ?? []).length === 0 ? (
-          <section className="mt-8 rounded-2xl border border-line bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-ink">Aún no encontramos placas para este correo.</h2>
-            <p className="mt-2 text-sm leading-6 text-slateText">
+          <Card className="taply-fade-up mt-8 overflow-hidden rounded-[2rem] p-6 sm:p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brandSoft text-xl font-black text-brand">
+              T
+            </div>
+            <h2 className="mt-5 text-2xl font-bold tracking-tight text-ink">Aún no encontramos placas.</h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slateText">
               Verifica que la placa haya sido activada con el mismo email con el que iniciaste sesión.
             </p>
-          </section>
+            <a
+              href="https://taplytap.io"
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-2xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.22)] transition hover:bg-brandHover"
+            >
+              Comprar una placa
+            </a>
+          </Card>
         ) : (
-          <section className="mt-8 grid gap-4">
-            {(plates ?? []).map((plate) => (
-              <article key={plate.id} className="rounded-2xl border border-line bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+          <section className="mt-8 grid gap-5">
+            {(plates ?? []).map((plate, index) => (
+              <Card
+                key={plate.id}
+                className="taply-fade-up rounded-[1.75rem] border border-white bg-white/95 p-5 shadow-[0_22px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(15,23,42,0.11)] sm:p-6"
+                style={{ animationDelay: `${Math.min(index * 60, 240)}ms` }}
+              >
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                   <div>
-                    <h2 className="text-xl font-semibold text-ink">
+                    <h2 className="text-2xl font-bold tracking-tight text-ink">
                       {plate.business_name ?? "Placa TaplyTap"}
                     </h2>
-                    <p className="mt-1 font-mono text-xs text-slateText">{plate.code}</p>
+                    <p className="mt-2 inline-flex rounded-full bg-slate-50 px-3 py-1 font-mono text-xs font-semibold text-slateText">
+                      {plate.code}
+                    </p>
                   </div>
-                  <span className="w-fit rounded-full border border-brandBorder bg-brandSoft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
-                    {plate.status}
-                  </span>
+                  <Badge className={getStatusBadgeClass(plate.status)}>
+                    {getStatusLabel(plate.status)}
+                  </Badge>
                 </div>
 
                 <dl className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -190,19 +217,19 @@ async function renderDashboardPage() {
                       href={plate.destination_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:border-brandBorder hover:bg-brandSoft sm:flex-none"
                     >
                       Abrir link de reseña
                     </a>
                   ) : null}
                   <Link
                     href={`/user/${plate.code}`}
-                    className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:border-brandBorder hover:bg-brandSoft sm:flex-none"
                   >
                     Probar placa
                   </Link>
                 </div>
-              </article>
+              </Card>
             ))}
           </section>
         )}
@@ -232,7 +259,7 @@ function PlaceIdCard({
   const placeId = extractPlaceId(destinationUrl ?? "");
 
   return (
-    <section className="mt-4 rounded-2xl border border-line bg-white p-4 shadow-sm">
+    <Card className="mt-4 rounded-2xl p-4 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">Place ID de Google</h3>
@@ -246,7 +273,7 @@ function PlaceIdCard({
           buttonLabel="Cambiar"
         />
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -277,9 +304,28 @@ function extractPlaceId(value: string) {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-brandBorder bg-brandSoft px-4 py-3">
+    <div className="rounded-2xl border border-brandBorder bg-white/85 px-4 py-4 shadow-[0_14px_34px_rgba(0,109,255,0.06)]">
       <dt className="text-xs font-semibold uppercase tracking-wide text-slateText">{label}</dt>
-      <dd className="mt-1 text-2xl font-bold text-ink">{value}</dd>
+      <dd className="mt-1 text-2xl font-bold tracking-tight text-ink">{value}</dd>
     </div>
   );
+}
+
+function getStatusLabel(status: string) {
+  if (status === "active") return "Activa";
+  if (status === "inactive") return "Pendiente";
+  if (status === "blocked") return "Bloqueada";
+  return status;
+}
+
+function getStatusBadgeClass(status: string) {
+  if (status === "active") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "blocked") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  return "border-brandBorder bg-brandSoft text-brand";
 }

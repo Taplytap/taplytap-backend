@@ -16,3 +16,39 @@ input,
 select {
   font: inherit;
 }
+
+@keyframes taply-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes taply-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.taply-fade-up {
+  animation: taply-fade-up 520ms ease-out both;
+}
+
+.taply-shimmer {
+  overflow: hidden;
+  position: relative;
+}
+
+.taply-shimmer::after {
+  animation: taply-shimmer 1.8s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  content: "";
+  inset: 0;
+  position: absolute;
+  transform: translateX(-100%);
+}

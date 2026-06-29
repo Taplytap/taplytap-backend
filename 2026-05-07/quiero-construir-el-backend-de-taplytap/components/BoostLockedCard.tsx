@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { ExternalLink, Loader2, LockKeyhole, Sparkles } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export function BoostLockedCard() {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,32 +37,59 @@ export function BoostLockedCard() {
   }
 
   return (
-    <section className="mt-5 rounded-2xl border border-brandBorder bg-white p-5 shadow-[0_18px_55px_rgba(0,109,255,0.08)]">
+    <Card className="taply-fade-up mt-5 overflow-hidden border-brandBorder bg-[linear-gradient(135deg,#FFFFFF_0%,#EEF6FF_100%)] p-5 shadow-[0_22px_70px_rgba(0,109,255,0.10)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_80px_rgba(0,109,255,0.14)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-bold text-ink">✨ TaplyTap Boost</h3>
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-brand" />
+            <h3 className="text-lg font-bold text-ink">TaplyTap Boost</h3>
+            <Badge className="bg-white/80 normal-case tracking-normal">Premium</Badge>
+          </div>
           <p className="mt-3 text-sm font-semibold text-ink">
             Estado:
-            <span className="ml-2 text-slateText">🔒 Bloqueado</span>
+            <span className="ml-2 inline-flex items-center gap-1 text-slateText">
+              <LockKeyhole size={14} />
+              Bloqueado
+            </span>
           </p>
           <p className="mt-2 text-sm leading-6 text-slateText">
             Activa Boost para filtrar reseñas y recibir comentarios privados.
           </p>
+          <a
+            href="https://taplytap.io/products/taplytap-boost"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition hover:text-brandHover"
+          >
+            ¿Quieres ver más detalles?
+            <ExternalLink size={14} />
+          </a>
           {error ? (
-            <p className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <Alert variant="destructive" className="mt-3 px-3 py-2">
               {error}
-            </p>
+            </Alert>
           ) : null}
         </div>
-        <button
+        <Button
           type="button"
           onClick={handleCheckout}
           disabled={isLoading}
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover disabled:cursor-not-allowed disabled:bg-brand/70"
+          size="lg"
+          className="text-sm"
         >
-          {isLoading ? "Abriendo..." : "Activar Boost"}
-        </button>
+          {isLoading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Abriendo...
+            </>
+          ) : (
+            <>
+              <Sparkles size={16} />
+              Activar Boost
+            </>
+          )}
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }
