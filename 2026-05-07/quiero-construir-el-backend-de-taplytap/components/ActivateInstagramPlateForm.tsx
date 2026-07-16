@@ -20,11 +20,33 @@ export function ActivateInstagramPlateForm({
   code,
   currentUserEmail
 }: ActivateInstagramPlateFormProps) {
+  const [activeEmail, setActiveEmail] = useState(currentUserEmail);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirmingAccountChange, setIsConfirmingAccountChange] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const isSignedIn = Boolean(currentUserEmail);
+  const [isSigningOut, startSignOutTransition] = useTransition();
+  const isSignedIn = Boolean(activeEmail);
+
+  function changeAccount() {
+    setSubmitError(null);
+
+    startSignOutTransition(async () => {
+      const response = await fetch("/api/auth/sign-out", {
+        method: "POST"
+      });
+
+      if (!response.ok) {
+        setSubmitError("No pudimos cerrar la sesión actual. Intenta de nuevo.");
+        return;
+      }
+
+      setActiveEmail(null);
+      setIsConfirmingAccountChange(false);
+      setErrors({});
+    });
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,7 +121,17 @@ export function ActivateInstagramPlateForm({
           {isSignedIn ? (
             <div className="rounded-xl border border-brandBorder bg-brandSoft px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slateText">Cuenta TaplyTap</p>
-              <p className="mt-1 break-all text-sm font-semibold text-ink">{currentUserEmail}</p>
+              <p className="mt-1 break-all text-sm font-semibold text-ink">{activeEmail}</p>
+              <p className="mt-3 text-xs leading-5 text-slateText">
+                ¿No es tu cuenta?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingAccountChange(true)}
+                  className="font-semibold text-brand hover:text-brandHover"
+                >
+                  Cambiar cuenta
+                </button>
+              </p>
             </div>
           ) : (
             <>
@@ -162,6 +194,34 @@ export function ActivateInstagramPlateForm({
           {isPending ? "Activando..." : "Activar placa de Instagram"}
         </button>
       </form>
+      {isConfirmingAccountChange ? (
+        <div className="fixed inset-0 z-50 flex items-end bg-ink/30 px-4 py-5 sm:items-center sm:justify-center">
+          <div className="w-full rounded-2xl border border-line bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:max-w-sm">
+            <p className="text-base font-bold text-ink">¿Seguro que quieres cambiar de cuenta?</p>
+            <p className="mt-2 text-sm leading-6 text-slateText">
+              Se cerrará la sesión actual y podrás iniciar sesión con otro correo.
+            </p>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={isSigningOut}
+                onClick={() => setIsConfirmingAccountChange(false)}
+                className="min-h-11 rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-70"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isSigningOut}
+                onClick={changeAccount}
+                className="min-h-11 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brandHover disabled:cursor-wait disabled:opacity-70"
+              >
+                {isSigningOut ? "Cambiando..." : "Sí, cambiar cuenta"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <SupportWhatsAppBubble />
     </>
   );

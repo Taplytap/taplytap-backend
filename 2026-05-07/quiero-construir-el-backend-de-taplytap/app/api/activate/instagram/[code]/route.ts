@@ -41,7 +41,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const supabase = createSupabaseAdminClient();
   const { data: currentPlate, error: currentPlateError } = await supabase
     .from("instagram_plates")
-    .select("code,status")
+    .select("code,status,owner_user_id")
     .eq("code", code)
     .maybeSingle();
 
@@ -53,8 +53,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Instagram plate not found." }, { status: 404 });
   }
 
-  if (currentPlate.status !== "inactive") {
-    return NextResponse.json({ error: "Code is not available for activation." }, { status: 409 });
+  if (currentPlate.status !== "inactive" || currentPlate.owner_user_id) {
+    return NextResponse.json(
+      { error: "Esta placa ya fue activada o asignada a otra cuenta." },
+      { status: 409 }
+    );
   }
 
   const ownerResult = await getAuthenticatedOrFormOwner(formData);
@@ -78,6 +81,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     })
     .eq("code", code)
     .eq("status", "inactive")
+    .is("owner_user_id", null)
     .select("code")
     .maybeSingle();
 
