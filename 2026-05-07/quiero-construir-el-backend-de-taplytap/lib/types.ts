@@ -84,8 +84,12 @@ export type InstagramPlate = {
   status: QrStatus;
   public_url: string | null;
   destination_url: string | null;
+  owner_user_id: string | null;
+  owner_email: string | null;
+  activation_code: string | null;
   business_name: string | null;
   instagram_handle: string | null;
+  activated_at: string | null;
   created_at: string;
   updated_at: string;
 };

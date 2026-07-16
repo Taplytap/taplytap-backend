@@ -16,7 +16,7 @@ type LastDownload = {
 };
 
 export function InstagramPlateCreator() {
-  const [quantity, setQuantity] = useState(500);
+  const [quantity, setQuantity] = useState(1);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +47,12 @@ export function InstagramPlateCreator() {
   }
 
   async function generateLinks() {
+    if (quantity >= 100) {
+      const confirmed = window.confirm(`Vas a generar ${quantity} placas de Instagram permanentes. ¿Quieres continuar?`);
+
+      if (!confirmed) return;
+    }
+
     beginProgress();
 
     startTransition(async () => {
@@ -66,10 +72,10 @@ export function InstagramPlateCreator() {
 
         endProgress();
         setLastDownload({ csv: result.csv, filePrefix: result.filePrefix });
-        setMessage(`${result.count} links de Instagram creados correctamente`);
+        setMessage(`${result.count} placas de Instagram generadas correctamente`);
         downloadCsv(result.csv, result.filePrefix);
       } catch {
-        setError("No pudimos generar los links de Instagram. Intenta de nuevo.");
+        setError("No pudimos generar las placas de Instagram. Intenta de nuevo.");
       } finally {
         if (progressTimer.current) clearInterval(progressTimer.current);
       }
@@ -109,7 +115,7 @@ export function InstagramPlateCreator() {
 
   return (
     <div className="rounded-2xl border border-line bg-white p-4 shadow-sm">
-      <div className="grid gap-3 sm:grid-cols-[auto_auto_auto] sm:items-end">
+      <div className="grid gap-4">
         <label className="grid gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-slateText">Cantidad</span>
           <input
@@ -118,27 +124,46 @@ export function InstagramPlateCreator() {
             type="number"
             min="1"
             max="1000"
-            className="w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm sm:w-28"
+            className="w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm sm:w-36"
           />
         </label>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={generateLinks}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          {isPending ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-          Generar links
-        </button>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={exportLinksCsv}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isPending ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          Exportar CSV
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {[1, 10, 25, 50, 100, 500].map((quickQuantity) => (
+            <button
+              key={quickQuantity}
+              type="button"
+              disabled={isPending}
+              onClick={() => setQuantity(quickQuantity)}
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                quantity === quickQuantity
+                  ? "border-brand bg-brand text-white"
+                  : "border-line bg-white text-ink hover:bg-brandSoft"
+              }`}
+            >
+              {quickQuantity}
+            </button>
+          ))}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={generateLinks}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {isPending ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+            Generar placas
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={exportLinksCsv}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            Exportar CSV
+          </button>
+        </div>
       </div>
 
       {isPending ? (
@@ -146,7 +171,7 @@ export function InstagramPlateCreator() {
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <p className="mt-2 text-xs text-slateText">Creando registros únicos para placas Instagram...</p>
+          <p className="mt-2 text-xs text-slateText">Creando registros permanentes para placas Instagram...</p>
         </div>
       ) : null}
 

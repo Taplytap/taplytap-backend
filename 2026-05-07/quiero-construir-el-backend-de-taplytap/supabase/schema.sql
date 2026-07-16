@@ -124,8 +124,12 @@ create table if not exists public.instagram_plates (
   status public.qr_status not null default 'inactive',
   public_url text,
   destination_url text,
+  owner_user_id uuid references auth.users(id),
+  owner_email text,
+  activation_code text,
   business_name text,
   instagram_handle text,
+  activated_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint instagram_plates_code_format check (code ~ '^[a-z0-9_-]{4,64}$'),
@@ -137,8 +141,18 @@ create table if not exists public.instagram_plates (
   )
 );
 
+alter table public.instagram_plates
+  add column if not exists public_url text,
+  add column if not exists destination_url text,
+  add column if not exists owner_user_id uuid references auth.users(id),
+  add column if not exists owner_email text,
+  add column if not exists activation_code text,
+  add column if not exists activated_at timestamptz;
+
 create index if not exists instagram_plates_status_idx on public.instagram_plates (status);
 create index if not exists instagram_plates_created_at_idx on public.instagram_plates (created_at);
+create index if not exists instagram_plates_owner_user_id_idx on public.instagram_plates (owner_user_id);
+create index if not exists instagram_plates_owner_email_idx on public.instagram_plates (owner_email);
 
 create table if not exists public.shopify_webhook_events (
   id text primary key,

@@ -24,7 +24,7 @@ export default async function AdminInstagramPage() {
           <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap Admin</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Placas Instagram</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slateText">
-            Genera links únicos para las placas físicas de Instagram. Estos registros viven separados de
+            Genera placas únicas para producción física de Instagram. Estos registros viven separados de
             las placas de reseñas y no cambian ningún QR público existente.
           </p>
         </div>
@@ -36,11 +36,11 @@ export default async function AdminInstagramPage() {
         <section className="mt-6 rounded-2xl border border-line bg-white p-5 text-sm leading-6 text-slateText shadow-sm">
           <p className="font-semibold text-ink">Formato de link</p>
           <p className="mt-2">
-            Cada placa queda con una URL pública como{" "}
+            Cada placa queda guardada con una URL pública como{" "}
             <span className="font-mono text-xs text-ink">https://app.taplytap.io/instagram/[codigo]</span>.
           </p>
           <p className="mt-2">
-            Por ahora esta sección solo crea y exporta links. La configuración del destino de Instagram se
+            El CSV siempre sale desde registros guardados en Supabase. La configuración del destino de Instagram se
             mantiene separada para proteger las placas de reseñas que ya están en producción.
           </p>
         </section>

@@ -1,7 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSupportEmail } from "@/lib/env";
-import { isSafeDestinationUrl, isValidCode, normalizeCode } from "@/lib/security";
+import { isValidInstagramProfileUrl } from "@/lib/instagram-url";
+import { isValidCode, normalizeCode } from "@/lib/security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -61,20 +62,24 @@ export default async function InstagramPlatePage({ params }: PageProps) {
     );
   }
 
-  if (plate.status !== "active" || !plate.destination_url) {
+  if (plate.status === "inactive") {
+    redirect(`/activate/instagram/${code}`);
+  }
+
+  if (!plate.destination_url) {
     return (
       <InstagramPlateState
-        title="Placa Instagram pendiente"
-        message="Esta placa ya existe, pero todavía no tiene un destino configurado."
+        title="Destino no disponible"
+        message="La placa está activa, pero todavía no tiene un enlace de Instagram configurado."
       />
     );
   }
 
-  if (!isSafeDestinationUrl(plate.destination_url)) {
+  if (!isValidInstagramProfileUrl(plate.destination_url)) {
     return (
       <InstagramPlateState
         title="Destino no disponible"
-        message="La placa está activa, pero su URL de destino no es válida."
+        message="La placa está activa, pero su enlace de Instagram no es válido."
       />
     );
   }

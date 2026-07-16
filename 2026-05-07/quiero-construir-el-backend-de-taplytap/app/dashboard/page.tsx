@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { BoostLockedCard } from "@/components/BoostLockedCard";
 import { CustomerBoostOverview } from "@/components/CustomerBoostOverview";
+import { InstagramPlateSection, type InstagramPlateItem } from "@/components/InstagramPlateSection";
 import { PlateCarousel, type PlateCarouselItem } from "@/components/PlateCarousel";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
+import { Card } from "@/components/ui/card";
 import { logServerError } from "@/lib/server-log";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -56,6 +58,14 @@ async function renderDashboardPage({ searchParams }: PageProps) {
     .eq("owner_email", ownerEmail)
     .is("owner_user_id", null);
 
+  await supabase
+    .from("instagram_plates")
+    .update({
+      owner_user_id: user.id
+    })
+    .eq("owner_email", ownerEmail)
+    .is("owner_user_id", null);
+
   const { data: boostSubscription, error: boostSubscriptionError } = await supabase
     .from("boost_subscriptions")
     .select("status")
@@ -89,6 +99,16 @@ async function renderDashboardPage({ searchParams }: PageProps) {
 
   if (platesError) {
     throw new Error(platesError.message);
+  }
+
+  const { data: instagramPlates, error: instagramPlatesError } = await supabase
+    .from("instagram_plates")
+    .select("*")
+    .eq("owner_user_id", user.id)
+    .order("created_at", { ascending: true });
+
+  if (instagramPlatesError) {
+    throw new Error(instagramPlatesError.message);
   }
 
   const plateIds = (plates ?? []).map((plate) => plate.id);
@@ -162,6 +182,13 @@ async function renderDashboardPage({ searchParams }: PageProps) {
     scanRecent: scanRecent.get(plate.id) ?? 0,
     lastScanAt: latestScan.get(plate.id) ?? null
   }));
+  const instagramPlateItems: InstagramPlateItem[] = (instagramPlates ?? []).map((plate) => ({
+    id: plate.id,
+    code: plate.code,
+    status: plate.status,
+    destinationUrl: plate.destination_url
+  }));
+  const hasAnyPlates = carouselPlates.length > 0 || instagramPlateItems.length > 0;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#EEF6FF_0%,#F8FAFC_34%,#FFFFFF_100%)] px-5 py-8 sm:px-6 lg:px-8">
@@ -172,7 +199,7 @@ async function renderDashboardPage({ searchParams }: PageProps) {
             ¡Bienvenido, <span className="text-brand">{businessName}</span>!
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-slateText">
-            Administra tus placas y mejora tu presencia en Google desde un solo lugar.
+            Administra tus placas de Google e Instagram desde un solo lugar.
           </p>
         </div>
 
@@ -185,10 +212,16 @@ async function renderDashboardPage({ searchParams }: PageProps) {
           <BoostLockedCard />
         )}
 
-        <PlateCarousel
-          plates={carouselPlates}
-          hasActiveBoostLicense={hasActiveBoostLicense}
-        />
+        {carouselPlates.length > 0 ? (
+          <PlateCarousel
+            plates={carouselPlates}
+            hasActiveBoostLicense={hasActiveBoostLicense}
+          />
+        ) : null}
+
+        <InstagramPlateSection plates={instagramPlateItems} />
+
+        {!hasAnyPlates ? <EmptyPlatesCard /> : null}
 
         <a
           href="https://taplytap.io"
@@ -199,6 +232,23 @@ async function renderDashboardPage({ searchParams }: PageProps) {
       </div>
       <SupportWhatsAppBubble />
     </main>
+  );
+}
+
+function EmptyPlatesCard() {
+  return (
+    <Card className="taply-fade-up mt-8 overflow-hidden rounded-[2rem] p-6 sm:p-8">
+      <h2 className="text-2xl font-bold tracking-tight text-ink">Aún no encontramos placas.</h2>
+      <p className="mt-3 max-w-xl text-sm leading-6 text-slateText">
+        Verifica que la placa haya sido activada con el mismo email con el que iniciaste sesión.
+      </p>
+      <a
+        href="https://taplytap.io"
+        className="mt-6 inline-flex min-h-11 items-center justify-center rounded-2xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,109,255,0.22)] transition hover:bg-brandHover"
+      >
+        Comprar una placa
+      </a>
+    </Card>
   );
 }
 

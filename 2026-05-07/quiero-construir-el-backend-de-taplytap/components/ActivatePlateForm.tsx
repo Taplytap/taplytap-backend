@@ -234,6 +234,9 @@ export function ActivatePlateForm({ code }: ActivatePlateFormProps) {
         <p className="mt-6 rounded-xl bg-brandSoft px-4 py-3 text-sm leading-6 text-slateText">
           Podrás solicitar cambios a soporte cuando lo necesites.
         </p>
+        <p className="mt-3 rounded-xl border border-line bg-white px-4 py-3 text-sm leading-6 text-slateText">
+          ¿Ya tienes una cuenta TaplyTap? Usa el mismo correo y contraseña para agregar esta placa a tu cuenta actual.
+        </p>
 
         {submitError ? (
           <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
