@@ -78,6 +78,18 @@ export type BoostSubscriptionPending = {
   created_at: string;
 };
 
+export type InstagramPlate = {
+  id: string;
+  code: string;
+  status: QrStatus;
+  public_url: string | null;
+  destination_url: string | null;
+  business_name: string | null;
+  instagram_handle: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -160,6 +172,15 @@ export type Database = {
           status?: BoostSubscriptionStatus;
         };
         Update: Partial<Omit<BoostSubscriptionPending, "id" | "created_at">>;
+        Relationships: [];
+      };
+      instagram_plates: {
+        Row: InstagramPlate;
+        Insert: Partial<Omit<InstagramPlate, "id" | "created_at" | "updated_at">> & {
+          code: string;
+          status?: QrStatus;
+        };
+        Update: Partial<Omit<InstagramPlate, "id" | "created_at" | "updated_at">>;
         Relationships: [];
       };
     };

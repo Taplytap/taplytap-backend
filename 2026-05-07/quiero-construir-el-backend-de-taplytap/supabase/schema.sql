@@ -118,6 +118,28 @@ create index if not exists boost_subscriptions_status_idx on public.boost_subscr
 create index if not exists boost_subscriptions_email_idx on public.boost_subscriptions (email);
 create index if not exists boost_subscriptions_stripe_subscription_id_idx on public.boost_subscriptions (stripe_subscription_id);
 
+create table if not exists public.instagram_plates (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  status public.qr_status not null default 'inactive',
+  public_url text,
+  destination_url text,
+  business_name text,
+  instagram_handle text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint instagram_plates_code_format check (code ~ '^[a-z0-9_-]{4,64}$'),
+  constraint instagram_plates_destination_https check (
+    destination_url is null or destination_url ~ '^https://'
+  ),
+  constraint instagram_plates_active_has_destination check (
+    status <> 'active' or destination_url is not null
+  )
+);
+
+create index if not exists instagram_plates_status_idx on public.instagram_plates (status);
+create index if not exists instagram_plates_created_at_idx on public.instagram_plates (created_at);
+
 create table if not exists public.shopify_webhook_events (
   id text primary key,
   topic text not null,
@@ -161,10 +183,17 @@ before update on public.boost_subscriptions
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_instagram_plates_updated_at on public.instagram_plates;
+create trigger set_instagram_plates_updated_at
+before update on public.instagram_plates
+for each row
+execute function public.set_updated_at();
+
 alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
 alter table public.boost_feedback enable row level security;
 alter table public.boost_subscriptions enable row level security;
+alter table public.instagram_plates enable row level security;
 alter table public.shopify_webhook_events enable row level security;
 alter table public.boost_subscription_pending enable row level security;
 
@@ -198,6 +227,14 @@ with check (false);
 drop policy if exists "Deny public boost subscription access" on public.boost_subscriptions;
 create policy "Deny public boost subscription access"
 on public.boost_subscriptions
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public instagram plates access" on public.instagram_plates;
+create policy "Deny public instagram plates access"
+on public.instagram_plates
 for all
 to anon, authenticated
 using (false)

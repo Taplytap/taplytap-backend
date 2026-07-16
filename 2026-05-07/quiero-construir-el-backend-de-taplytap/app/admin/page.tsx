@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, MessageCircle, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Instagram, MessageCircle, Pencil, Plus, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
@@ -46,16 +46,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     .order("created_at", { ascending: true });
 
   if (query) {
-    const escapedQuery = escapeSupabasePattern(query);
-    qrQuery = qrQuery.or(
-      [
-        `code.ilike.%${escapedQuery}%`,
-        `business_name.ilike.%${escapedQuery}%`,
-        `whatsapp.ilike.%${escapedQuery}%`,
-        `owner_email.ilike.%${escapedQuery}%`,
-        `status.ilike.%${escapedQuery}%`
-      ].join(",")
-    );
+    const statusSearch = getStatusSearch(query);
+
+    if (statusSearch) {
+      qrQuery = qrQuery.eq("status", statusSearch);
+    } else {
+      const escapedQuery = escapeSupabasePattern(query);
+      qrQuery = qrQuery.or(
+        [
+          `code.ilike.%${escapedQuery}%`,
+          `business_name.ilike.%${escapedQuery}%`,
+          `whatsapp.ilike.%${escapedQuery}%`,
+          `owner_email.ilike.%${escapedQuery}%`,
+          `contact_name.ilike.%${escapedQuery}%`,
+          `place_id.ilike.%${escapedQuery}%`,
+          `destination_url.ilike.%${escapedQuery}%`,
+          `public_url.ilike.%${escapedQuery}%`,
+          `shopify_order_number.ilike.%${escapedQuery}%`
+        ].join(",")
+      );
+    }
   }
 
   if (["active", "inactive", "blocked"].includes(filter)) {
@@ -114,6 +124,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               Crear QR
             </Link>
             <Link
+              href={"/admin/instagram" as never}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+            >
+              <Instagram size={16} />
+              Placas Instagram
+            </Link>
+            <Link
               href={"/admin/danger" as never}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-slateText transition hover:bg-red-50 hover:text-red-700"
             >
@@ -142,7 +159,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 name="q"
                 defaultValue={query}
                 className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
-                placeholder="Código, negocio, WhatsApp, email o status"
+                placeholder="Código, negocio, WhatsApp, email, Place ID o status"
               />
             </label>
             <label className="grid gap-2">
@@ -413,4 +430,22 @@ function Pagination({
 
 function escapeSupabasePattern(value: string) {
   return value.replace(/[%_]/g, (character) => `\\${character}`);
+}
+
+function getStatusSearch(value: string): QrStatus | null {
+  const normalized = value.trim().toLowerCase();
+
+  if (["active", "activo", "activa", "activos", "activas"].includes(normalized)) {
+    return "active";
+  }
+
+  if (["inactive", "inactivo", "inactiva", "pendiente", "pendientes"].includes(normalized)) {
+    return "inactive";
+  }
+
+  if (["blocked", "bloqueado", "bloqueada", "bloqueados", "bloqueadas"].includes(normalized)) {
+    return "blocked";
+  }
+
+  return null;
 }
