@@ -154,6 +154,42 @@ create index if not exists instagram_plates_created_at_idx on public.instagram_p
 create index if not exists instagram_plates_owner_user_id_idx on public.instagram_plates (owner_user_id);
 create index if not exists instagram_plates_owner_email_idx on public.instagram_plates (owner_email);
 
+create table if not exists public.facebook_plates (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  status public.qr_status not null default 'inactive',
+  public_url text,
+  destination_url text,
+  owner_user_id uuid references auth.users(id),
+  owner_email text,
+  activation_code text,
+  business_name text,
+  facebook_handle text,
+  activated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint facebook_plates_code_format check (code ~ '^[a-z0-9_-]{4,64}$'),
+  constraint facebook_plates_destination_https check (
+    destination_url is null or destination_url ~ '^https://'
+  ),
+  constraint facebook_plates_active_has_destination check (
+    status <> 'active' or destination_url is not null
+  )
+);
+
+alter table public.facebook_plates
+  add column if not exists public_url text,
+  add column if not exists destination_url text,
+  add column if not exists owner_user_id uuid references auth.users(id),
+  add column if not exists owner_email text,
+  add column if not exists activation_code text,
+  add column if not exists activated_at timestamptz;
+
+create index if not exists facebook_plates_status_idx on public.facebook_plates (status);
+create index if not exists facebook_plates_created_at_idx on public.facebook_plates (created_at);
+create index if not exists facebook_plates_owner_user_id_idx on public.facebook_plates (owner_user_id);
+create index if not exists facebook_plates_owner_email_idx on public.facebook_plates (owner_email);
+
 create table if not exists public.shopify_webhook_events (
   id text primary key,
   topic text not null,
@@ -203,11 +239,18 @@ before update on public.instagram_plates
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_facebook_plates_updated_at on public.facebook_plates;
+create trigger set_facebook_plates_updated_at
+before update on public.facebook_plates
+for each row
+execute function public.set_updated_at();
+
 alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
 alter table public.boost_feedback enable row level security;
 alter table public.boost_subscriptions enable row level security;
 alter table public.instagram_plates enable row level security;
+alter table public.facebook_plates enable row level security;
 alter table public.shopify_webhook_events enable row level security;
 alter table public.boost_subscription_pending enable row level security;
 
@@ -249,6 +292,14 @@ with check (false);
 drop policy if exists "Deny public instagram plates access" on public.instagram_plates;
 create policy "Deny public instagram plates access"
 on public.instagram_plates
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public facebook plates access" on public.facebook_plates;
+create policy "Deny public facebook plates access"
+on public.facebook_plates
 for all
 to anon, authenticated
 using (false)

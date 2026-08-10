@@ -94,6 +94,22 @@ export type InstagramPlate = {
   updated_at: string;
 };
 
+export type FacebookPlate = {
+  id: string;
+  code: string;
+  status: QrStatus;
+  public_url: string | null;
+  destination_url: string | null;
+  owner_user_id: string | null;
+  owner_email: string | null;
+  activation_code: string | null;
+  business_name: string | null;
+  facebook_handle: string | null;
+  activated_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -185,6 +201,15 @@ export type Database = {
           status?: QrStatus;
         };
         Update: Partial<Omit<InstagramPlate, "id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      facebook_plates: {
+        Row: FacebookPlate;
+        Insert: Partial<Omit<FacebookPlate, "id" | "created_at" | "updated_at">> & {
+          code: string;
+          status?: QrStatus;
+        };
+        Update: Partial<Omit<FacebookPlate, "id" | "created_at" | "updated_at">>;
         Relationships: [];
       };
     };

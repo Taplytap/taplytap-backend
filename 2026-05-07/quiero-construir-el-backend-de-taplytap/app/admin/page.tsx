@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Instagram, MessageCircle, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Instagram, MessageCircle, Pencil, Plus, Share2, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
@@ -129,6 +129,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             >
               <Instagram size={16} />
               Placas Instagram
+            </Link>
+            <Link
+              href={"/admin/facebook" as never}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+            >
+              <Share2 size={16} />
+              Placas Facebook
             </Link>
             <Link
               href={"/admin/danger" as never}

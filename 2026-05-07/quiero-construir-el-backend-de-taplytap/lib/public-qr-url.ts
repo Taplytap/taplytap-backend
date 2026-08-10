@@ -7,3 +7,7 @@ export function buildPublicQrUrl(code: string) {
 export function buildInstagramPlateUrl(code: string) {
   return `${PUBLIC_QR_BASE_URL}/instagram/${code.trim()}`;
 }
+
+export function buildFacebookPlateUrl(code: string) {
+  return `${PUBLIC_QR_BASE_URL}/facebook/${code.trim()}`;
+}
