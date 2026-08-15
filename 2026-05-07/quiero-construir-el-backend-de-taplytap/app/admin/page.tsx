@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink, Instagram, MessageCircle, Pencil, Plus, Share2, Trash2 } from "lucide-react";
+import { AdminBoostToggle } from "@/components/AdminBoostToggle";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { buildPublicQrUrl } from "@/lib/public-qr-url";
@@ -228,6 +229,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <p className="mt-1 truncate font-mono text-xs text-ink">{publicUrl}</p>
                   </div>
 
+                  <div className="mt-4 rounded-xl border border-line bg-white px-3 py-3">
+                    <AdminBoostToggle
+                      code={qr.code}
+                      initialEnabled={qr.boost_enabled}
+                      hasOwner={Boolean(qr.owner_user_id)}
+                    />
+                  </div>
+
                   <div className="mt-5 grid gap-2">
                     <a
                       href={publicUrl}
@@ -274,6 +283,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <th className="px-4 py-3">Owner user</th>
                   <th className="px-4 py-3">Reclamada</th>
                   <th className="px-4 py-3">Scans</th>
+                  <th className="px-4 py-3">Boost</th>
                   <th className="px-4 py-3">URL placa</th>
                   <th className="px-4 py-3">Editar</th>
                 </tr>
@@ -305,6 +315,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       {qr.claimed_at ? new Date(qr.claimed_at).toLocaleDateString("es-MX") : "-"}
                     </td>
                     <td className="px-4 py-3 text-slateText">{scanCounts.get(qr.id) ?? 0}</td>
+                    <td className="px-4 py-3">
+                      <AdminBoostToggle
+                        code={qr.code}
+                        initialEnabled={qr.boost_enabled}
+                        hasOwner={Boolean(qr.owner_user_id)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <a
                         href={buildPublicQrUrl(qr.code)}
