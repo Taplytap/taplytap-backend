@@ -190,6 +190,27 @@ create index if not exists facebook_plates_created_at_idx on public.facebook_pla
 create index if not exists facebook_plates_owner_user_id_idx on public.facebook_plates (owner_user_id);
 create index if not exists facebook_plates_owner_email_idx on public.facebook_plates (owner_email);
 
+create table if not exists public.support_audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  support_user_id uuid references auth.users(id) on delete set null,
+  support_email text,
+  qr_code_id uuid references public.qr_codes(id) on delete set null,
+  code text not null,
+  action text not null,
+  previous_place_id text,
+  new_place_id text,
+  previous_destination_url text,
+  new_destination_url text,
+  created_at timestamptz not null default now(),
+  constraint support_audit_logs_code_format check (code ~ '^[a-z0-9_-]{4,64}$'),
+  constraint support_audit_logs_action_check check (action in ('update_place_id'))
+);
+
+create index if not exists support_audit_logs_support_user_id_idx on public.support_audit_logs (support_user_id);
+create index if not exists support_audit_logs_qr_code_id_idx on public.support_audit_logs (qr_code_id);
+create index if not exists support_audit_logs_code_idx on public.support_audit_logs (code);
+create index if not exists support_audit_logs_created_at_idx on public.support_audit_logs (created_at desc);
+
 create table if not exists public.shopify_webhook_events (
   id text primary key,
   topic text not null,
@@ -251,6 +272,7 @@ alter table public.boost_feedback enable row level security;
 alter table public.boost_subscriptions enable row level security;
 alter table public.instagram_plates enable row level security;
 alter table public.facebook_plates enable row level security;
+alter table public.support_audit_logs enable row level security;
 alter table public.shopify_webhook_events enable row level security;
 alter table public.boost_subscription_pending enable row level security;
 
@@ -300,6 +322,14 @@ with check (false);
 drop policy if exists "Deny public facebook plates access" on public.facebook_plates;
 create policy "Deny public facebook plates access"
 on public.facebook_plates
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public support audit logs access" on public.support_audit_logs;
+create policy "Deny public support audit logs access"
+on public.support_audit_logs
 for all
 to anon, authenticated
 using (false)

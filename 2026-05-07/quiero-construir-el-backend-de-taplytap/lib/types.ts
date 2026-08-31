@@ -110,6 +110,20 @@ export type FacebookPlate = {
   updated_at: string;
 };
 
+export type SupportAuditLog = {
+  id: string;
+  support_user_id: string | null;
+  support_email: string | null;
+  qr_code_id: string | null;
+  code: string;
+  action: string;
+  previous_place_id: string | null;
+  new_place_id: string | null;
+  previous_destination_url: string | null;
+  new_destination_url: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -211,6 +225,23 @@ export type Database = {
         };
         Update: Partial<Omit<FacebookPlate, "id" | "created_at" | "updated_at">>;
         Relationships: [];
+      };
+      support_audit_logs: {
+        Row: SupportAuditLog;
+        Insert: Partial<Omit<SupportAuditLog, "id" | "created_at">> & {
+          code: string;
+          action: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "support_audit_logs_qr_code_id_fkey";
+            columns: ["qr_code_id"];
+            isOneToOne: false;
+            referencedRelation: "qr_codes";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: Record<string, never>;

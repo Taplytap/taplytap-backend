@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+const boostProductUrl = "https://taplytap.io/products/boost";
+
 export function BoostLockedCard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,16 +18,7 @@ export function BoostLockedCard() {
     setError(null);
 
     try {
-      const response = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST"
-      });
-      const data = (await response.json()) as { url?: string; error?: string };
-
-      if (!response.ok || !data.url) {
-        throw new Error(data.error ?? "No pudimos iniciar el pago en este momento.");
-      }
-
-      window.location.href = data.url;
+      window.location.href = boostProductUrl;
     } catch (checkoutError) {
       setError(
         checkoutError instanceof Error
@@ -56,7 +49,7 @@ export function BoostLockedCard() {
             Activa Boost para filtrar reseñas y recibir comentarios privados.
           </p>
           <a
-            href="https://taplytap.io/products/taplytap-boost"
+            href={boostProductUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition hover:text-brandHover"

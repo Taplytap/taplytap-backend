@@ -30,9 +30,24 @@ export function getAdminEmails() {
     .filter(Boolean);
 }
 
+export function getSupportEmails() {
+  return [process.env.SUPPORT_EMAILS, process.env.SUPPORT_EMAIL]
+    .filter(Boolean)
+    .join(",")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export function assertAdminEnv() {
   if (getAdminEmails().length === 0) {
     throw new Error("Missing ADMIN_EMAILS or ADMIN_EMAIL.");
+  }
+}
+
+export function assertSupportEnv() {
+  if (getSupportEmails().length === 0) {
+    throw new Error("Missing SUPPORT_EMAILS or SUPPORT_EMAIL.");
   }
 }
 

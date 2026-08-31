@@ -78,7 +78,7 @@ export function BoostModule({
               Filtra reseñas y recibe comentarios privados de tus clientes.
             </p>
             <a
-              href="https://taplytap.io/products/taplytap-boost"
+              href="https://taplytap.io/products/boost"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition hover:text-brandHover"

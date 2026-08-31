@@ -73,7 +73,7 @@ export function CustomerBoostOverview({
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <a
-                href="https://taplytap.io/products/taplytap-boost"
+                href="https://taplytap.io/products/boost"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition hover:text-brandHover"
