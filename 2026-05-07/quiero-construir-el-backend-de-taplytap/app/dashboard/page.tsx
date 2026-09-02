@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ActivateAnotherPlate } from "@/components/ActivateAnotherPlate";
 import { BoostLockedCard } from "@/components/BoostLockedCard";
 import { CustomerBoostOverview } from "@/components/CustomerBoostOverview";
 import { FacebookPlateSection, type FacebookPlateItem } from "@/components/FacebookPlateSection";
@@ -238,10 +239,13 @@ async function renderDashboardPage({ searchParams }: PageProps) {
         )}
 
         {carouselPlates.length > 0 ? (
-          <PlateCarousel
-            plates={carouselPlates}
-            hasActiveBoostLicense={hasActiveBoostLicense}
-          />
+          <>
+            <ActivateAnotherPlate />
+            <PlateCarousel
+              plates={carouselPlates}
+              hasActiveBoostLicense={hasActiveBoostLicense}
+            />
+          </>
         ) : null}
 
         <InstagramPlateSection plates={instagramPlateItems} />

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { BoostRatingGate } from "@/components/BoostRatingGate";
 import { getSupportEmail } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { hashIp, isSafeDestinationUrl, isValidCode, normalizeCode } from "@/lib/security";
 import type { QrStatus } from "@/lib/types";
 
@@ -48,6 +49,15 @@ export default async function UserQrPage({ params }: PageProps) {
   }
 
   if (qrCode.status === "inactive") {
+    const authClient = createSupabaseServerClient();
+    const {
+      data: { user }
+    } = await authClient.auth.getUser();
+
+    if (user?.email) {
+      redirect(`/activate/quick/${code}`);
+    }
+
     redirect(`/activate/${code}`);
   }
 
