@@ -3,18 +3,20 @@
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState, useTransition } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, LogOut, UserRound } from "lucide-react";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 
 type QuickActivatePlateFormProps = {
   code: string;
+  ownerEmail: string;
 };
 
-export function QuickActivatePlateForm({ code }: QuickActivatePlateFormProps) {
+export function QuickActivatePlateForm({ code, ownerEmail }: QuickActivatePlateFormProps) {
   const router = useRouter();
   const [placeId, setPlaceId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function activatePlate(event: React.FormEvent<HTMLFormElement>) {
@@ -42,6 +44,19 @@ export function QuickActivatePlateForm({ code }: QuickActivatePlateFormProps) {
         setError(activateError instanceof Error ? activateError.message : "No pudimos activar esta placa.");
       }
     });
+  }
+
+  async function signOutAndUseAnotherAccount() {
+    setError(null);
+    setIsSigningOut(true);
+
+    try {
+      await fetch("/api/auth/sign-out", {
+        method: "POST"
+      });
+    } finally {
+      window.location.href = `/activate/${code}`;
+    }
   }
 
   if (isSuccess) {
@@ -82,6 +97,31 @@ export function QuickActivatePlateForm({ code }: QuickActivatePlateFormProps) {
         <p className="mt-3 text-base leading-7 text-slateText">
           ¿A qué negocio quieres dirigir esta placa?
         </p>
+
+        <div className="mt-6 rounded-3xl border border-line bg-slate-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-brand shadow-sm">
+              <UserRound size={19} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-ink">Se activará en esta cuenta</p>
+              <p className="mt-1 break-all font-mono text-sm font-semibold text-ink">{ownerEmail}</p>
+              <p className="mt-2 text-xs leading-5 text-slateText">
+                Esta placa quedará vinculada permanentemente a esta cuenta.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={signOutAndUseAnotherAccount}
+          disabled={isPending || isSigningOut}
+          className="mt-3 inline-flex items-center gap-2 rounded-xl px-1 py-2 text-sm font-semibold text-red-500 transition hover:text-red-600 disabled:cursor-wait disabled:opacity-60"
+        >
+          {isSigningOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
+          {isSigningOut ? "Cerrando sesión..." : "Cerrar sesión y usar otra cuenta"}
+        </button>
 
         <form onSubmit={activatePlate} className="mt-7">
           <label className="grid gap-2">

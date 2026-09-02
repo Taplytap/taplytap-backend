@@ -72,7 +72,7 @@ export default async function QuickActivatePlatePage({ params }: PageProps) {
         <p className="mt-4 w-fit rounded-full border border-brandBorder bg-brandSoft px-3 py-1 font-mono text-xs font-semibold uppercase tracking-wide text-brand">
           Código {code}
         </p>
-        <QuickActivatePlateForm code={code} />
+        <QuickActivatePlateForm code={code} ownerEmail={user.email} />
       </div>
     </main>
   );
