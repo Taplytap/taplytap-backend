@@ -18,7 +18,16 @@ export function BoostLockedCard() {
     setError(null);
 
     try {
-      window.location.href = boostProductUrl;
+      const response = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST"
+      });
+      const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error ?? "No pudimos iniciar el pago en este momento.");
+      }
+
+      window.location.href = payload.url;
     } catch (checkoutError) {
       setError(
         checkoutError instanceof Error
