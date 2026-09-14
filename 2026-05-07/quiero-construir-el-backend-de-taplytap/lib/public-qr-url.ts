@@ -11,3 +11,7 @@ export function buildInstagramPlateUrl(code: string) {
 export function buildFacebookPlateUrl(code: string) {
   return `${PUBLIC_QR_BASE_URL}/facebook/${code.trim()}`;
 }
+
+export function buildProfilePlateUrl(code: string) {
+  return `${PUBLIC_QR_BASE_URL}/p/${code.trim()}`;
+}

@@ -190,6 +190,62 @@ create index if not exists facebook_plates_created_at_idx on public.facebook_pla
 create index if not exists facebook_plates_owner_user_id_idx on public.facebook_plates (owner_user_id);
 create index if not exists facebook_plates_owner_email_idx on public.facebook_plates (owner_email);
 
+create table if not exists public.profile_plates (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  status public.qr_status not null default 'inactive',
+  public_url text,
+  owner_user_id uuid references auth.users(id),
+  owner_email text,
+  business_name text,
+  description text,
+  profile_image_path text,
+  activated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint profile_plates_code_format check (code ~ '^[a-z0-9_-]{4,64}$')
+);
+
+create table if not exists public.profile_links (
+  id uuid primary key default gen_random_uuid(),
+  profile_plate_id uuid not null references public.profile_plates(id) on delete cascade,
+  type text not null,
+  label text not null,
+  source_value text,
+  url text not null,
+  enabled boolean not null default true,
+  sort_order int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint profile_links_type_check check (
+    type in ('instagram', 'whatsapp', 'facebook', 'google_reviews', 'tiktok', 'website')
+  ),
+  constraint profile_links_url_https check (url ~ '^https://')
+);
+
+create unique index if not exists profile_links_plate_type_key
+  on public.profile_links (profile_plate_id, type);
+create index if not exists profile_plates_status_idx on public.profile_plates (status);
+create index if not exists profile_plates_created_at_idx on public.profile_plates (created_at);
+create index if not exists profile_plates_owner_user_id_idx on public.profile_plates (owner_user_id);
+create index if not exists profile_plates_owner_email_idx on public.profile_plates (owner_email);
+create index if not exists profile_links_profile_plate_id_idx on public.profile_links (profile_plate_id);
+create index if not exists profile_links_sort_order_idx on public.profile_links (profile_plate_id, sort_order);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'profile-plate-images',
+  'profile-plate-images',
+  true,
+  2097152,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
 create table if not exists public.support_audit_logs (
   id uuid primary key default gen_random_uuid(),
   support_user_id uuid references auth.users(id) on delete set null,
@@ -266,12 +322,26 @@ before update on public.facebook_plates
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_profile_plates_updated_at on public.profile_plates;
+create trigger set_profile_plates_updated_at
+before update on public.profile_plates
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists set_profile_links_updated_at on public.profile_links;
+create trigger set_profile_links_updated_at
+before update on public.profile_links
+for each row
+execute function public.set_updated_at();
+
 alter table public.qr_codes enable row level security;
 alter table public.scan_events enable row level security;
 alter table public.boost_feedback enable row level security;
 alter table public.boost_subscriptions enable row level security;
 alter table public.instagram_plates enable row level security;
 alter table public.facebook_plates enable row level security;
+alter table public.profile_plates enable row level security;
+alter table public.profile_links enable row level security;
 alter table public.support_audit_logs enable row level security;
 alter table public.shopify_webhook_events enable row level security;
 alter table public.boost_subscription_pending enable row level security;
@@ -326,6 +396,39 @@ for all
 to anon, authenticated
 using (false)
 with check (false);
+
+drop policy if exists "Deny public profile plates access" on public.profile_plates;
+create policy "Deny public profile plates access"
+on public.profile_plates
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "Deny public profile links access" on public.profile_links;
+create policy "Deny public profile links access"
+on public.profile_links
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'Public profile plate images read'
+  ) then
+    create policy "Public profile plate images read"
+    on storage.objects
+    for select
+    to anon, authenticated
+    using (bucket_id = 'profile-plate-images');
+  end if;
+end $$;
 
 drop policy if exists "Deny public support audit logs access" on public.support_audit_logs;
 create policy "Deny public support audit logs access"

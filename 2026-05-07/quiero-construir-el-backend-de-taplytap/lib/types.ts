@@ -1,5 +1,6 @@
 export type QrStatus = "active" | "inactive" | "blocked";
 export type BoostSubscriptionStatus = "inactive" | "active" | "canceled" | "past_due";
+export type ProfileLinkType = "instagram" | "whatsapp" | "facebook" | "google_reviews" | "tiktok" | "website";
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type QrCode = {
@@ -106,6 +107,34 @@ export type FacebookPlate = {
   business_name: string | null;
   facebook_handle: string | null;
   activated_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProfilePlate = {
+  id: string;
+  code: string;
+  status: QrStatus;
+  public_url: string | null;
+  owner_user_id: string | null;
+  owner_email: string | null;
+  business_name: string | null;
+  description: string | null;
+  profile_image_path: string | null;
+  activated_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProfileLink = {
+  id: string;
+  profile_plate_id: string;
+  type: ProfileLinkType;
+  label: string;
+  source_value: string | null;
+  url: string;
+  enabled: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -225,6 +254,35 @@ export type Database = {
         };
         Update: Partial<Omit<FacebookPlate, "id" | "created_at" | "updated_at">>;
         Relationships: [];
+      };
+      profile_plates: {
+        Row: ProfilePlate;
+        Insert: Partial<Omit<ProfilePlate, "id" | "created_at" | "updated_at">> & {
+          code: string;
+          status?: QrStatus;
+        };
+        Update: Partial<Omit<ProfilePlate, "id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      profile_links: {
+        Row: ProfileLink;
+        Insert: Partial<Omit<ProfileLink, "id" | "created_at" | "updated_at">> & {
+          profile_plate_id: string;
+          type: ProfileLinkType;
+          label: string;
+          url: string;
+          source_value?: string | null;
+        };
+        Update: Partial<Omit<ProfileLink, "id" | "created_at" | "updated_at">>;
+        Relationships: [
+          {
+            foreignKeyName: "profile_links_profile_plate_id_fkey";
+            columns: ["profile_plate_id"];
+            isOneToOne: false;
+            referencedRelation: "profile_plates";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       support_audit_logs: {
         Row: SupportAuditLog;

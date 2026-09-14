@@ -5,11 +5,13 @@ import { CustomerBoostOverview } from "@/components/CustomerBoostOverview";
 import { FacebookPlateSection, type FacebookPlateItem } from "@/components/FacebookPlateSection";
 import { InstagramPlateSection, type InstagramPlateItem } from "@/components/InstagramPlateSection";
 import { PlateCarousel, type PlateCarouselItem } from "@/components/PlateCarousel";
+import { ProfilePlateSection, type ProfilePlateItem } from "@/components/ProfilePlateSection";
 import { SupportWhatsAppBubble } from "@/components/SupportWhatsAppBubble";
 import { Card } from "@/components/ui/card";
 import { logServerError } from "@/lib/server-log";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { ProfileLink } from "@/lib/types";
 
 type FeedbackItem = {
   qr_code_id: string | null;
@@ -76,6 +78,14 @@ async function renderDashboardPage({ searchParams }: PageProps) {
     .eq("owner_email", ownerEmail)
     .is("owner_user_id", null);
 
+  await supabase
+    .from("profile_plates")
+    .update({
+      owner_user_id: user.id
+    })
+    .eq("owner_email", ownerEmail)
+    .is("owner_user_id", null);
+
   const { data: boostSubscription, error: boostSubscriptionError } = await supabase
     .from("boost_subscriptions")
     .select("status")
@@ -129,6 +139,29 @@ async function renderDashboardPage({ searchParams }: PageProps) {
 
   if (facebookPlatesError) {
     throw new Error(facebookPlatesError.message);
+  }
+
+  const { data: profilePlates, error: profilePlatesError } = await supabase
+    .from("profile_plates")
+    .select("*")
+    .eq("owner_user_id", user.id)
+    .order("created_at", { ascending: true });
+
+  if (profilePlatesError) {
+    throw new Error(profilePlatesError.message);
+  }
+
+  const profilePlateIds = (profilePlates ?? []).map((plate) => plate.id);
+  const { data: profileLinks, error: profileLinksError } = profilePlateIds.length > 0
+    ? await supabase
+        .from("profile_links")
+        .select("*")
+        .in("profile_plate_id", profilePlateIds)
+        .order("sort_order", { ascending: true })
+    : { data: [], error: null };
+
+  if (profileLinksError) {
+    throw new Error(profileLinksError.message);
   }
 
   const plateIds = (plates ?? []).map((plate) => plate.id);
@@ -187,7 +220,10 @@ async function renderDashboardPage({ searchParams }: PageProps) {
     feedbackByPlate.set(item.qr_code_id, currentFeedback);
   }
 
-  const businessName = plates?.find((plate) => plate.business_name)?.business_name ?? "tu negocio";
+  const businessName =
+    plates?.find((plate) => plate.business_name)?.business_name ??
+    profilePlates?.find((plate) => plate.business_name)?.business_name ??
+    "tu negocio";
   const feedbackCount = feedback?.length ?? 0;
   const allBoostEnabled = (plates ?? []).length > 0 && (plates ?? []).every((plate) => plate.boost_enabled);
   const carouselPlates: PlateCarouselItem[] = (plates ?? []).map((plate) => ({
@@ -214,7 +250,38 @@ async function renderDashboardPage({ searchParams }: PageProps) {
     status: plate.status,
     destinationUrl: plate.destination_url
   }));
-  const hasAnyPlates = carouselPlates.length > 0 || instagramPlateItems.length > 0 || facebookPlateItems.length > 0;
+  const profileLinksByPlate = new Map<string, ProfileLink[]>();
+
+  for (const link of profileLinks ?? []) {
+    const currentLinks = profileLinksByPlate.get(link.profile_plate_id) ?? [];
+    currentLinks.push(link);
+    profileLinksByPlate.set(link.profile_plate_id, currentLinks);
+  }
+
+  const profilePlateItems: ProfilePlateItem[] = (profilePlates ?? []).map((plate) => ({
+    id: plate.id,
+    code: plate.code,
+    status: plate.status,
+    publicUrl: plate.public_url,
+    profileImagePath: plate.profile_image_path,
+    profileImageUrl: getProfileImagePublicUrl(supabase, plate.profile_image_path),
+    businessName: plate.business_name,
+    description: plate.description,
+    links: (profileLinksByPlate.get(plate.id) ?? []).map((link) => ({
+      id: link.id,
+      type: link.type,
+      label: link.label,
+      source_value: link.source_value,
+      url: link.url,
+      enabled: link.enabled,
+      sort_order: link.sort_order
+    }))
+  }));
+  const hasAnyPlates =
+    carouselPlates.length > 0 ||
+    instagramPlateItems.length > 0 ||
+    facebookPlateItems.length > 0 ||
+    profilePlateItems.length > 0;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#EEF6FF_0%,#F8FAFC_34%,#FFFFFF_100%)] px-5 py-8 sm:px-6 lg:px-8">
@@ -225,7 +292,7 @@ async function renderDashboardPage({ searchParams }: PageProps) {
             ¡Bienvenido, <span className="text-brand">{businessName}</span>!
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-slateText">
-            Administra tus placas de Google, Instagram y Facebook desde un solo lugar.
+            Administra tus placas de Google, Instagram, Facebook y Perfil desde un solo lugar.
           </p>
         </div>
 
@@ -250,6 +317,7 @@ async function renderDashboardPage({ searchParams }: PageProps) {
 
         <InstagramPlateSection plates={instagramPlateItems} />
         <FacebookPlateSection plates={facebookPlateItems} />
+        <ProfilePlateSection plates={profilePlateItems} />
 
         {!hasAnyPlates ? <EmptyPlatesCard /> : null}
 
@@ -290,4 +358,13 @@ function isNextRedirectError(error: unknown) {
     typeof (error as { digest?: unknown }).digest === "string" &&
     (error as { digest: string }).digest.startsWith("NEXT_REDIRECT")
   );
+}
+
+function getProfileImagePublicUrl(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  profileImagePath: string | null
+) {
+  if (!profileImagePath) return null;
+
+  return supabase.storage.from("profile-plate-images").getPublicUrl(profileImagePath).data.publicUrl;
 }
