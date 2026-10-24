@@ -150,6 +150,23 @@ export type SupportAuditLog = {
   new_place_id: string | null;
   previous_destination_url: string | null;
   new_destination_url: string | null;
+  previous_owner_user_id: string | null;
+  new_owner_user_id: string | null;
+  previous_owner_email: string | null;
+  new_owner_email: string | null;
+  created_at: string;
+};
+
+export type SupportPlateAuditLog = {
+  id: string;
+  actor_user_id: string | null;
+  actor_email: string;
+  plate_type: "google" | "instagram" | "facebook" | "profile";
+  plate_id: string;
+  code: string;
+  action: "update";
+  previous_data: Json;
+  new_data: Json;
   created_at: string;
 };
 
@@ -300,6 +317,12 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      support_plate_audit_logs: {
+        Row: SupportPlateAuditLog;
+        Insert: Omit<SupportPlateAuditLog, "id" | "created_at">;
+        Update: never;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

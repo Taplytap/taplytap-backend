@@ -48,9 +48,9 @@ export default function SupportLoginPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
-      <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap Soporte</p>
-      <h1 className="text-3xl font-bold text-ink">Entrar a soporte</h1>
-      <p className="mt-3 text-gray-600">Acceso exclusivo para personal autorizado.</p>
+      <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap Operaciones</p>
+      <h1 className="text-3xl font-bold text-ink">Entrar a Operaciones</h1>
+      <p className="mt-3 text-gray-600">Administra placas existentes desde un solo lugar.</p>
 
       {errorMessage ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -66,7 +66,7 @@ export default function SupportLoginPage({ searchParams }: PageProps) {
             type="email"
             required
             className="rounded-md border border-gray-300 bg-white px-3 py-2"
-            placeholder="soporte@taplytap.io"
+            placeholder="correo@taplytap.io"
           />
         </label>
         <label className="grid gap-2">
@@ -79,7 +79,7 @@ export default function SupportLoginPage({ searchParams }: PageProps) {
             placeholder="Tu contraseña"
           />
         </label>
-        <button className="rounded-md bg-ink px-4 py-2 font-semibold text-white">Entrar a soporte</button>
+        <button className="rounded-md bg-brand px-4 py-3 font-semibold text-white">Entrar</button>
       </form>
     </main>
   );

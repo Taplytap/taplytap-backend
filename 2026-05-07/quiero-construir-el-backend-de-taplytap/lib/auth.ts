@@ -72,6 +72,30 @@ export async function getSupportUser() {
   }
 }
 
+export async function getAdminOrSupportUser() {
+  const adminUser = await getAdminUser();
+
+  if (adminUser?.email) {
+    return {
+      id: adminUser.id,
+      email: adminUser.email.toLowerCase(),
+      role: "admin" as const
+    };
+  }
+
+  const supportUser = await getSupportUser();
+
+  if (supportUser?.email) {
+    return {
+      id: supportUser.id,
+      email: supportUser.email.toLowerCase(),
+      role: "support" as const
+    };
+  }
+
+  return null;
+}
+
 export async function requireSupport() {
   let user: { id: string; email?: string } | null = null;
 

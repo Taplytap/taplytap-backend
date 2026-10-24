@@ -1,17 +1,45 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { ExternalLink, Search } from "lucide-react";
+import { ExternalLink, LogOut, Search } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { SupportPlaceIdEditor } from "@/components/SupportPlaceIdEditor";
 import { requireSupport } from "@/lib/auth";
-import { buildPublicQrUrl } from "@/lib/public-qr-url";
+import {
+  buildFacebookPlateUrl,
+  buildInstagramPlateUrl,
+  buildProfilePlateUrl,
+  buildPublicQrUrl
+} from "@/lib/public-qr-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { QrStatus } from "@/lib/types";
+
+type SupportPlateType = "all" | "google" | "instagram" | "facebook" | "profile";
+
+type SupportPlateResult = {
+  id: string;
+  type: Exclude<SupportPlateType, "all">;
+  code: string;
+  status: QrStatus;
+  name: string | null;
+  ownerEmail: string | null;
+  publicUrl: string;
+  detail: string | null;
+  createdAt: string;
+};
 
 type SupportPageProps = {
   searchParams?: {
     q?: string;
+    type?: string;
   };
 };
+
+const plateTypes: Array<{ value: SupportPlateType; label: string }> = [
+  { value: "all", label: "Todas" },
+  { value: "google", label: "Google" },
+  { value: "instagram", label: "Instagram" },
+  { value: "facebook", label: "Facebook" },
+  { value: "profile", label: "Perfiles" }
+];
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,171 +49,273 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
   const supportUser = await requireSupport();
   const query = String(searchParams?.q ?? "").trim();
-  const results = query ? await searchQrCodes(query) : [];
+  const selectedType = normalizePlateType(searchParams?.type);
+  const results = await searchSupportPlates(query, selectedType);
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#F8FAFC] px-4 pb-28 pt-6 sm:px-6 sm:py-10 lg:px-8">
       <div className="mx-auto max-w-4xl">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand">TaplyTap Soporte</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Panel de soporte</h1>
-          <p className="mt-2 text-sm text-slateText">
-            Sesión activa: {supportUser.email}
-          </p>
-        </div>
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">TaplyTap Operaciones</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Buscar una placa</h1>
+            <p className="mt-2 text-sm text-slateText">
+              Google, Instagram, Facebook y perfiles desde un solo buscador.
+            </p>
+            <p className="mt-1 text-xs text-slateText">Sesión: {supportUser.email}</p>
+          </div>
+          <form action="/api/auth/sign-out" method="post">
+            <button
+              type="submit"
+              aria-label="Cerrar sesión"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-white text-slateText shadow-sm"
+            >
+              <LogOut size={18} />
+            </button>
+          </form>
+        </header>
 
-        <form action="/support" className="mt-8 rounded-2xl border border-line bg-white p-4 shadow-sm">
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-ink">Buscar placa</span>
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <input
-                name="q"
-                defaultValue={query}
-                className="rounded-xl border border-line bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-slateText/60 focus:border-brand focus:ring-2 focus:ring-brand/15"
-                placeholder="Código, email del propietario o ID"
-              />
-              <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brandHover">
-                <Search size={16} />
-                Buscar
-              </button>
-            </div>
-          </label>
+        <form action="/support" className="sticky top-3 z-10 mt-7 rounded-2xl border border-line bg-white/95 p-3 shadow-lg backdrop-blur">
+          <input type="hidden" name="type" value={selectedType} />
+          <label className="sr-only" htmlFor="support-search">Buscar placa</label>
+          <div className="flex items-center gap-2">
+            <Search size={19} className="ml-2 shrink-0 text-slateText" />
+            <input
+              id="support-search"
+              name="q"
+              defaultValue={query}
+              className="min-h-12 min-w-0 flex-1 border-0 bg-transparent px-1 text-base text-ink outline-none placeholder:text-slateText/60"
+              placeholder="Código, negocio, usuario, teléfono o correo"
+              autoComplete="off"
+            />
+            <button className="min-h-11 shrink-0 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brandHover">
+              Buscar
+            </button>
+          </div>
         </form>
 
-        <section className="mt-6 grid gap-4">
-          {!query ? (
-            <div className="rounded-2xl border border-line bg-white p-6 text-sm leading-6 text-slateText shadow-sm">
-              Busca por código de placa, email del propietario o ID para atender un caso.
-            </div>
-          ) : results.length === 0 ? (
-            <div className="rounded-2xl border border-line bg-white p-6 text-sm leading-6 text-slateText shadow-sm">
-              No encontramos placas con esa búsqueda.
+        <nav className="mt-4 flex gap-2 overflow-x-auto pb-2" aria-label="Tipos de placa">
+          {plateTypes.map((type) => (
+            <Link
+              key={type.value}
+              href={buildFilterHref(type.value, query)}
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                selectedType === type.value
+                  ? "border-brand bg-brand text-white"
+                  : "border-line bg-white text-slateText hover:border-brandBorder hover:text-brand"
+              }`}
+            >
+              {type.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-sm font-semibold text-ink">
+            {query ? `Resultados para “${query}”` : "Placas recientes"}
+          </p>
+          <span className="text-xs font-medium text-slateText">{results.length} resultados</span>
+        </div>
+
+        <section className="mt-3 grid gap-3">
+          {results.length === 0 ? (
+            <div className="rounded-2xl border border-line bg-white p-7 text-center shadow-sm">
+              <Search size={24} className="mx-auto text-slateText" />
+              <p className="mt-3 font-semibold text-ink">No encontramos ninguna placa</p>
+              <p className="mt-1 text-sm leading-6 text-slateText">
+                Revisa el código, correo, teléfono o nombre e intenta de nuevo.
+              </p>
             </div>
           ) : (
-            results.map((qr) => {
-              const publicUrl = qr.public_url ?? buildPublicQrUrl(qr.code);
-
-              return (
-                <article key={qr.id} className="rounded-2xl border border-line bg-white p-5 shadow-sm">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                    <div>
-                      <p className="font-mono text-xs font-semibold uppercase tracking-wide text-brand">
-                        {qr.code}
-                      </p>
-                      <h2 className="mt-2 text-xl font-bold text-ink">
-                        {qr.business_name ?? "Placa sin nombre"}
-                      </h2>
-                      <p className="mt-1 text-sm text-slateText">
-                        Cliente: {qr.owner_email ?? "—"}
-                      </p>
+            results.map((plate) => (
+              <article key={`${plate.type}-${plate.id}`} className="rounded-2xl border border-line bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <PlateTypeBadge type={plate.type} />
+                      <span className="font-mono text-xs font-semibold text-slateText">{plate.code}</span>
                     </div>
-                    <StatusBadge status={qr.status} />
+                    <h2 className="mt-3 truncate text-lg font-bold text-ink">{plate.name || "Placa sin nombre"}</h2>
+                    <p className="mt-1 truncate text-sm text-slateText">{plate.ownerEmail || "Sin propietario"}</p>
+                    {plate.detail ? <p className="mt-1 truncate text-sm text-slateText">{plate.detail}</p> : null}
                   </div>
+                  <StatusBadge status={plate.status} />
+                </div>
 
-                  <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-                    <Info label="Status" value={qr.status} />
-                    <Info label="Owner user" value={qr.owner_user_id ?? "—"} mono />
-                    <Info label="Place ID" value={qr.place_id ?? "—"} mono />
-                    <Info label="Boost" value={qr.boost_enabled ? "Activo" : "Inactivo"} />
-                    <Info label="Fecha de creación" value={formatDate(qr.created_at)} />
-                    <Info label="Destination URL" value={qr.destination_url ?? "—"} />
-                  </dl>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <a
-                      href={publicUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
-                    >
-                      <ExternalLink size={16} />
-                      Probar placa
-                    </a>
-                    {qr.destination_url ? (
-                      <a
-                        href={qr.destination_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-brandSoft"
-                      >
-                        <ExternalLink size={16} />
-                        Abrir destino
-                      </a>
-                    ) : null}
-                    <Link
-                      href={`/support?q=${encodeURIComponent(qr.code)}` as never}
-                      className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-slateText"
-                    >
-                      Ver código
-                    </Link>
-                  </div>
-
-                  <SupportPlaceIdEditor code={qr.code} initialPlaceId={qr.place_id} />
-                </article>
-              );
-            })
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/support/${plate.type}/${plate.code}` as never}
+                    className="inline-flex min-h-12 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brandHover"
+                  >
+                    Editar placa
+                  </Link>
+                  <a
+                    href={plate.publicUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold text-ink transition hover:bg-brandSoft"
+                  >
+                    <ExternalLink size={16} />
+                    Probar
+                  </a>
+                </div>
+              </article>
+            ))
           )}
         </section>
+
+        <p className="mt-6 text-center text-xs leading-5 text-slateText">
+          Este panel permite editar placas existentes. La creación y eliminación están deshabilitadas para Operaciones.
+        </p>
       </div>
     </main>
   );
 }
 
-async function searchQrCodes(query: string) {
+async function searchSupportPlates(query: string, selectedType: SupportPlateType) {
+  const searches: Array<Promise<SupportPlateResult[]>> = [];
+
+  if (selectedType === "all" || selectedType === "google") searches.push(searchGooglePlates(query));
+  if (selectedType === "all" || selectedType === "instagram") searches.push(searchInstagramPlates(query));
+  if (selectedType === "all" || selectedType === "facebook") searches.push(searchFacebookPlates(query));
+  if (selectedType === "all" || selectedType === "profile") searches.push(searchProfilePlates(query));
+
+  const groups = await Promise.all(searches);
+  const balancedGroups = selectedType === "all" && !query
+    ? groups.flatMap((group) => group.slice(0, 8))
+    : groups.flat();
+  const limit = 50;
+
+  return balancedGroups
+    .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
+    .slice(0, limit);
+}
+
+async function searchGooglePlates(query: string): Promise<SupportPlateResult[]> {
   const supabase = createSupabaseAdminClient();
-  const escapedQuery = escapeSupabasePattern(query);
-  const filters = [
-    `code.ilike.%${escapedQuery}%`,
-    `owner_email.ilike.%${escapedQuery}%`
-  ];
+  let request = supabase.from("qr_codes").select("*").order("created_at", { ascending: false }).limit(50);
+  const filter = buildSearchFilter(query, [
+    "code", "business_name", "contact_name", "whatsapp", "owner_email", "public_url", "destination_url"
+  ]);
+  if (filter) request = request.or(filter);
+  const { data, error } = await request;
+  if (error) throw new Error(error.message);
 
-  if (isUuid(query)) {
-    filters.push(`id.eq.${query}`);
-  }
-
-  const { data, error } = await supabase
-    .from("qr_codes")
-    .select("*")
-    .or(filters.join(","))
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data ?? [];
+  return (data ?? []).map((plate) => ({
+    id: plate.id,
+    type: "google",
+    code: plate.code,
+    status: plate.status,
+    name: plate.business_name,
+    ownerEmail: plate.owner_email,
+    publicUrl: plate.public_url ?? buildPublicQrUrl(plate.code),
+    detail: plate.whatsapp,
+    createdAt: plate.created_at
+  }));
 }
 
-function Info({
-  label,
-  value,
-  mono = false
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="rounded-xl bg-slate-50 px-3 py-3">
-      <dt className="text-xs font-semibold uppercase tracking-wide text-slateText">{label}</dt>
-      <dd className={`mt-1 break-all text-sm text-ink ${mono ? "font-mono" : ""}`}>{value}</dd>
-    </div>
-  );
+async function searchInstagramPlates(query: string): Promise<SupportPlateResult[]> {
+  const supabase = createSupabaseAdminClient();
+  let request = supabase.from("instagram_plates").select("*").order("created_at", { ascending: false }).limit(50);
+  const filter = buildSearchFilter(query, [
+    "code", "business_name", "instagram_handle", "owner_email", "public_url", "destination_url"
+  ]);
+  if (filter) request = request.or(filter);
+  const { data, error } = await request;
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((plate) => ({
+    id: plate.id,
+    type: "instagram",
+    code: plate.code,
+    status: plate.status,
+    name: plate.business_name,
+    ownerEmail: plate.owner_email,
+    publicUrl: plate.public_url ?? buildInstagramPlateUrl(plate.code),
+    detail: plate.instagram_handle,
+    createdAt: plate.created_at
+  }));
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("es-MX", {
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  });
+async function searchFacebookPlates(query: string): Promise<SupportPlateResult[]> {
+  const supabase = createSupabaseAdminClient();
+  let request = supabase.from("facebook_plates").select("*").order("created_at", { ascending: false }).limit(50);
+  const filter = buildSearchFilter(query, [
+    "code", "business_name", "facebook_handle", "owner_email", "public_url", "destination_url"
+  ]);
+  if (filter) request = request.or(filter);
+  const { data, error } = await request;
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((plate) => ({
+    id: plate.id,
+    type: "facebook",
+    code: plate.code,
+    status: plate.status,
+    name: plate.business_name,
+    ownerEmail: plate.owner_email,
+    publicUrl: plate.public_url ?? buildFacebookPlateUrl(plate.code),
+    detail: plate.facebook_handle,
+    createdAt: plate.created_at
+  }));
 }
 
-function escapeSupabasePattern(value: string) {
-  return value.replace(/[%_]/g, (character) => `\\${character}`);
+async function searchProfilePlates(query: string): Promise<SupportPlateResult[]> {
+  const supabase = createSupabaseAdminClient();
+  let request = supabase.from("profile_plates").select("*").order("created_at", { ascending: false }).limit(50);
+  const filter = buildSearchFilter(query, ["code", "business_name", "description", "owner_email", "public_url"]);
+  if (filter) request = request.or(filter);
+  const { data, error } = await request;
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((plate) => ({
+    id: plate.id,
+    type: "profile",
+    code: plate.code,
+    status: plate.status,
+    name: plate.business_name,
+    ownerEmail: plate.owner_email,
+    publicUrl: plate.public_url ?? buildProfilePlateUrl(plate.code),
+    detail: plate.description,
+    createdAt: plate.created_at
+  }));
 }
 
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+function buildSearchFilter(query: string, columns: string[]) {
+  if (!query) return "";
+  const value = query.replace(/[\\%,()\"]+/g, " ").trim();
+  if (!value) return "";
+  const filters = columns.map((column) => `${column}.ilike.%${value}%`);
+  const status = getStatusSearch(value);
+  if (status) filters.push(`status.eq.${status}`);
+  return filters.join(",");
+}
+
+function getStatusSearch(value: string): QrStatus | null {
+  const normalized = value.trim().toLowerCase();
+  if (["active", "activo", "activa", "activos", "activas"].includes(normalized)) return "active";
+  if (["inactive", "inactivo", "inactiva", "pendiente", "pendientes"].includes(normalized)) return "inactive";
+  if (["blocked", "bloqueado", "bloqueada", "bloqueados", "bloqueadas"].includes(normalized)) return "blocked";
+  return null;
+}
+
+function normalizePlateType(value?: string): SupportPlateType {
+  return plateTypes.some((type) => type.value === value) ? (value as SupportPlateType) : "all";
+}
+
+function buildFilterHref(type: SupportPlateType, query: string) {
+  const params = new URLSearchParams({ type });
+  if (query) params.set("q", query);
+  return `/support?${params.toString()}` as never;
+}
+
+function PlateTypeBadge({ type }: { type: Exclude<SupportPlateType, "all"> }) {
+  const labels = {
+    google: "Google",
+    instagram: "Instagram",
+    facebook: "Facebook",
+    profile: "Perfil"
+  };
+
+  return <span className="rounded-full bg-brandSoft px-2.5 py-1 text-xs font-bold text-brand">{labels[type]}</span>;
 }
